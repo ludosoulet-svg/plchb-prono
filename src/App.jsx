@@ -174,6 +174,8 @@ export default function App() {
   const [newDate, setNewDate] = useState("");
   const [newCategory, setNewCategory] = useState(CATEGORIES[0]);
   const [registeredUsers, setRegisteredUsers] = useState([]);
+  const [userPins, setUserPins] = useState({}); // { [username]: pin | null }
+  const [confirmingResetFor, setConfirmingResetFor] = useState(null);
   const [notifPermission, setNotifPermission] = useState(
     typeof Notification !== "undefined" ? Notification.permission : "unsupported"
   );
@@ -214,11 +216,17 @@ export default function App() {
     }
 
     try {
-      const { data, error } = await supabase.from("registered_users").select("username");
+      const { data, error } = await supabase.from("registered_users").select("username, pin");
       if (error) throw error;
       setRegisteredUsers((data || []).map((r) => r.username).sort());
+      const pins = {};
+      (data || []).forEach((r) => {
+        pins[r.username] = r.pin || null;
+      });
+      setUserPins(pins);
     } catch {
       setRegisteredUsers([]);
+      setUserPins({});
     }
 
     try {
@@ -284,9 +292,14 @@ export default function App() {
       /* ignore */
     }
     try {
-      const { data, error } = await supabase.from("registered_users").select("username");
+      const { data, error } = await supabase.from("registered_users").select("username, pin");
       if (error) throw error;
       setRegisteredUsers((data || []).map((r) => r.username).sort());
+      const pins = {};
+      (data || []).forEach((r) => {
+        pins[r.username] = r.pin || null;
+      });
+      setUserPins(pins);
     } catch {
       /* ignore */
     }
@@ -355,6 +368,11 @@ export default function App() {
   // Retire un licencié du registre ET efface ses pronostics (il ne comptera plus dans le classement).
   const removeLicencie = async (name) => {
     setRegisteredUsers((prev) => prev.filter((n) => n !== name));
+    setUserPins((prev) => {
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
     try {
       await supabase.from("registered_users").delete().eq("username", name);
     } catch {
@@ -368,6 +386,18 @@ export default function App() {
     }
     if (bonusPoints[name] !== undefined) {
       await resetBonusPoints(name);
+    }
+  };
+
+  // Réinitialise le code secret d'un licencié : à sa prochaine connexion, l'appli
+  // lui proposera d'en créer un nouveau (même flux qu'une première connexion).
+  const resetPin = async (name) => {
+    setUserPins((prev) => ({ ...prev, [name]: null }));
+    setConfirmingResetFor(null);
+    try {
+      await supabase.from("registered_users").update({ pin: null }).eq("username", name);
+    } catch {
+      /* ignore */
     }
   };
 
@@ -407,6 +437,7 @@ export default function App() {
       /* ignore */
     }
     setRegisteredUsers((prev) => (prev.includes(name) ? prev : [...prev, name].sort()));
+    setUserPins((prev) => ({ ...prev, [name]: pinInput }));
     localStorage.setItem(`${NS}:username`, name);
     setUsername(name);
   };
@@ -1052,23 +1083,19 @@ export default function App() {
                     Personne ne s'est encore connecté à l'appli.
                   </p>
                 ) : (
-                  <div className="flex flex-wrap gap-1.5">
-                    {allLicencies.map((name) => (
-                      <span
+                  <div style={{ border: `1px solid ${COLORS.line}` }} className="rounded-lg overflow-hidden">
+                    {allLicencies.map((name, i) => (
+                      <LicencieRow
                         key={name}
-                        style={{ background: COLORS.ink, color: COLORS.paper, border: `1px solid ${COLORS.line}` }}
-                        className="text-xs pl-2 pr-1 py-1 rounded-full flex items-center gap-1.5"
-                      >
-                        {name}
-                        <button
-                          onClick={() => removeLicencie(name)}
-                          style={{ color: COLORS.red }}
-                          aria-label={`Supprimer ${name}`}
-                          className="flex items-center"
-                        >
-                          <X size={12} />
-                        </button>
-                      </span>
+                        name={name}
+                        pin={userPins[name]}
+                        isLast={i === allLicencies.length - 1}
+                        confirming={confirmingResetFor === name}
+                        onStartReset={() => setConfirmingResetFor(name)}
+                        onCancelReset={() => setConfirmingResetFor(null)}
+                        onConfirmReset={() => resetPin(name)}
+                        onRemove={() => removeLicencie(name)}
+                      />
                     ))}
                   </div>
                 )}
@@ -1259,6 +1286,50 @@ function EmptyState({ text }) {
   return (
     <div style={{ background: COLORS.ink2, border: `1px dashed ${COLORS.line}`, color: COLORS.paperDim }} className="rounded-lg p-4 text-sm">
       {text}
+    </div>
+  );
+}
+
+function LicencieRow({ name, pin, isLast, confirming, onStartReset, onCancelReset, onConfirmReset, onRemove }) {
+  return (
+    <div
+      style={{ background: COLORS.ink, borderBottom: isLast ? "none" : `1px solid ${COLORS.line}` }}
+      className="flex items-center justify-between gap-2 px-3 py-2"
+    >
+      <div className="min-w-0">
+        <div style={{ color: COLORS.paper }} className="text-sm truncate">
+          {name}
+        </div>
+        <div style={{ color: COLORS.paperDim, fontFamily: "Oswald, sans-serif" }} className="text-xs tracking-wide">
+          {pin ? `Code : ${pin}` : "Pas encore de code"}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {confirming ? (
+          <>
+            <span style={{ color: COLORS.paperDim }} className="text-xs">
+              Confirmer ?
+            </span>
+            <button onClick={onConfirmReset} style={{ color: COLORS.green }} className="text-xs font-semibold underline">
+              Oui
+            </button>
+            <button onClick={onCancelReset} style={{ color: COLORS.paperDim }} className="text-xs underline">
+              Annuler
+            </button>
+          </>
+        ) : (
+          <>
+            {pin && (
+              <button onClick={onStartReset} style={{ color: COLORS.teal }} className="text-xs underline">
+                Réinitialiser le code
+              </button>
+            )}
+            <button onClick={onRemove} style={{ color: COLORS.red }} aria-label={`Supprimer ${name}`} className="flex items-center">
+              <X size={14} />
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }
