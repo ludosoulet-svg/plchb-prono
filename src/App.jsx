@@ -469,6 +469,9 @@ export default function App() {
     setLoginStep("name");
     setPinInput("");
     setPinError("");
+    localStorage.removeItem(`${NS}:showAdminTab`);
+    setShowAdminTab(false);
+    if (tab === "admin") setTab("matches");
   };
 
   const [addMatchError, setAddMatchError] = useState(false);
