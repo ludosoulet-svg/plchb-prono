@@ -911,7 +911,7 @@ export default function App() {
         )}
 
         {tab === "leaderboard" && (
-          <Section title="Classement">
+          <Section title="Classement" titleColor={COLORS.amber}>
             <div className="flex gap-1 mb-1">
               {[
                 ["weekend", "Cette semaine"],
