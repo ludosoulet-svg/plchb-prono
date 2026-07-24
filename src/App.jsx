@@ -675,7 +675,7 @@ export default function App() {
 
   if (!username) {
     return (
-      <div style={{ background: COLORS.ink, minHeight: "100vh", fontFamily: "Inter, sans-serif" }} className="flex items-center justify-center p-6">
+      <div style={{ background: COLORS.ink, minHeight: "100vh", fontFamily: "Inter, sans-serif" }} className="flex items-center justify-center p-6 pb-12">
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
         <HandExpertBanner />
         <style>{FONTS}</style>
@@ -760,9 +760,9 @@ export default function App() {
           target="_blank"
           rel="noopener noreferrer"
           style={{ background: COLORS.amber, borderTop: `1px solid ${COLORS.line}` }}
-          className="fixed bottom-0 left-0 right-0 flex items-center justify-center py-1.5"
+          className="fixed bottom-0 left-0 right-0 flex items-center justify-center py-3"
         >
-          <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-sm font-semibold uppercase">
+          <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-xl font-semibold uppercase">
             Ici, votre boutique du club
           </span>
         </a>
@@ -843,7 +843,7 @@ export default function App() {
         </div>
       )}
 
-      <div className="p-4 space-y-4 pb-20">
+      <div className="p-4 space-y-4 pb-40">
         {tab === "matches" && (
           <>
             <div className="flex gap-1 mb-1">
@@ -1263,9 +1263,9 @@ export default function App() {
         target="_blank"
         rel="noopener noreferrer"
         style={{ background: COLORS.amber, borderTop: `1px solid ${COLORS.line}` }}
-        className="fixed bottom-0 left-0 right-0 flex items-center justify-center py-1.5"
+        className="fixed bottom-0 left-0 right-0 flex items-center justify-center py-3"
       >
-        <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-sm font-semibold uppercase">
+        <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-xl font-semibold uppercase">
           Ici, votre boutique du club
         </span>
       </a>
