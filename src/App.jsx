@@ -674,8 +674,9 @@ export default function App() {
     return (
       <div style={{ background: COLORS.ink, minHeight: "100vh", fontFamily: "Inter, sans-serif" }} className="flex items-center justify-center p-6">
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
+        <HandExpertBanner />
         <style>{FONTS}</style>
-        <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="w-full max-w-sm rounded-lg p-6">
+        <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="w-full max-w-sm rounded-lg p-6 mt-12">
           <div className="flex items-center justify-between mb-3">
             <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-10 w-10 object-contain" />
             <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-10 w-10 object-contain" />
@@ -767,8 +768,9 @@ export default function App() {
   }
 
   return (
-    <div style={{ background: COLORS.ink, minHeight: "100vh", fontFamily: "Inter, sans-serif" }}>
+    <div style={{ background: COLORS.ink, minHeight: "100vh", fontFamily: "Inter, sans-serif", paddingTop: 48 }}>
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
+      <HandExpertBanner />
       <style>{FONTS}</style>
 
       {/* header */}
@@ -1278,6 +1280,19 @@ function Section({ title, children }) {
         {title}
       </div>
       <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function HandExpertBanner() {
+  return (
+    <div
+      style={{ position: "fixed", top: 4, left: 0, right: 0, background: COLORS.paper, borderBottom: `1px solid ${COLORS.line}`, zIndex: 49 }}
+      className="flex items-center justify-center py-1.5"
+    >
+      <a href="https://www.hand-expert.fr" target="_blank" rel="noopener noreferrer">
+        <img src={HAND_EXPERT_LOGO} alt="Hand Expert" className="h-9 object-contain" />
+      </a>
     </div>
   );
 }
