@@ -681,8 +681,8 @@ export default function App() {
         <style>{FONTS}</style>
         <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="w-full max-w-sm rounded-lg p-6 mt-12">
           <div className="flex items-center justify-between mb-3">
-            <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-10 w-10 object-contain" />
-            <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-10 w-10 object-contain" />
+            <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-14 w-14 object-contain" />
+            <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-14 w-14 object-contain" />
           </div>
           <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber, letterSpacing: "0.04em" }} className="text-xs uppercase mb-1 flex items-center gap-1">
             <Lock size={12} /> Pronostics du club
@@ -779,7 +779,7 @@ export default function App() {
       {/* header */}
       <div style={{ borderBottom: `1px solid ${COLORS.line}` }} className="px-4 pt-5 pb-3">
         <div className="flex items-center justify-between mb-1">
-          <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-9 w-9 object-contain" onClick={handleLogoTap} />
+          <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-12 w-12 object-contain" onClick={handleLogoTap} />
           <div className="flex flex-col items-center gap-1">
             <div style={{ color: COLORS.amber }} className="text-lg font-bold">
               {username}
@@ -793,7 +793,7 @@ export default function App() {
               Déconnexion
             </button>
           </div>
-          <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-9 w-9 object-contain" />
+          <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-12 w-12 object-contain" />
         </div>
         <h1 style={{ fontFamily: "Oswald, sans-serif", color: COLORS.paper }} className="text-xl font-semibold leading-tight text-center">
           À vos pronostics
