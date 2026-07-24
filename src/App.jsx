@@ -141,6 +141,23 @@ export default function App() {
   const [selectedWeekend, setSelectedWeekend] = useState(null);
   const [matchFilter, setMatchFilter] = useState("all"); // 'all' | 'mine'
   const [now, setNow] = useState(() => new Date());
+  const [showAdminTab, setShowAdminTab] = useState(() => localStorage.getItem(`${NS}:showAdminTab`) === "true");
+  const logoTapsRef = useRef([]);
+
+  const handleLogoTap = () => {
+    const t = Date.now();
+    logoTapsRef.current = [...logoTapsRef.current, t].filter((ts) => t - ts <= 3000);
+    if (logoTapsRef.current.length >= 5) {
+      logoTapsRef.current = [];
+      setShowAdminTab(true);
+      localStorage.setItem(`${NS}:showAdminTab`, "true");
+      setTab("admin");
+    }
+  };
+
+  useEffect(() => {
+    if (tab === "admin" && !showAdminTab) setTab("matches");
+  }, [tab, showAdminTab]);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 15000);
@@ -623,7 +640,7 @@ export default function App() {
       {/* header */}
       <div style={{ borderBottom: `1px solid ${COLORS.line}` }} className="px-4 pt-5 pb-3">
         <div className="flex items-center justify-between mb-1">
-          <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-9 w-9 object-contain" />
+          <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-9 w-9 object-contain" onClick={handleLogoTap} />
           <div className="flex flex-col items-center gap-1">
             <div style={{ color: COLORS.amber }} className="text-lg font-bold">
               {username}
@@ -649,7 +666,7 @@ export default function App() {
         {[
           ["matches", "Matchs"],
           ["leaderboard", "Classement"],
-          ["admin", "Admin"],
+          ...(showAdminTab ? [["admin", "Admin"]] : []),
         ].map(([key, label]) => (
           <button
             key={key}
