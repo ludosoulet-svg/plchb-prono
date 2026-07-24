@@ -129,6 +129,10 @@ function toLocalInputValue(iso) {
 export default function App() {
   const [username, setUsername] = useState(null);
   const [nameInput, setNameInput] = useState("");
+  const [loginStep, setLoginStep] = useState("name"); // "name" | "create-pin" | "verify-pin"
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [checkingUser, setCheckingUser] = useState(false);
   const [matches, setMatches] = useState([]);
   const [predictions, setPredictions] = useState({}); // key `${matchId}__${user}` -> {h,a}
   const [tab, setTab] = useState("matches");
@@ -367,18 +371,73 @@ export default function App() {
     }
   };
 
-  const saveUsername = async () => {
+  // Étape 1 : on vérifie si ce licencié a déjà un compte (et un code) avant de savoir
+  // s'il faut lui proposer de créer un code secret ou de saisir celui qu'il a déjà.
+  const handleNameContinue = async () => {
     const name = nameInput.trim().toLowerCase();
     if (!name) return;
+    setCheckingUser(true);
+    setPinError("");
+    try {
+      const { data, error } = await supabase.from("registered_users").select("pin").eq("username", name).maybeSingle();
+      if (error) throw error;
+      setLoginStep(data && data.pin ? "verify-pin" : "create-pin");
+    } catch {
+      setPinError("Impossible de vérifier ton compte, réessaie.");
+    } finally {
+      setCheckingUser(false);
+    }
+  };
+
+  const backToName = () => {
+    setLoginStep("name");
+    setPinInput("");
+    setPinError("");
+  };
+
+  const confirmCreatePin = async () => {
+    if (!/^\d{4}$/.test(pinInput)) {
+      setPinError("Le code doit contenir exactement 4 chiffres.");
+      return;
+    }
+    const name = nameInput.trim().toLowerCase();
+    try {
+      await supabase.from("registered_users").upsert({ username: name, pin: pinInput }, { onConflict: "username" });
+    } catch {
+      /* ignore */
+    }
+    setRegisteredUsers((prev) => (prev.includes(name) ? prev : [...prev, name].sort()));
     localStorage.setItem(`${NS}:username`, name);
     setUsername(name);
-    registerUser(name);
+  };
+
+  const confirmVerifyPin = async () => {
+    const name = nameInput.trim().toLowerCase();
+    setPinError("");
+    setCheckingUser(true);
+    try {
+      const { data, error } = await supabase.from("registered_users").select("pin").eq("username", name).maybeSingle();
+      if (error) throw error;
+      if (data && data.pin === pinInput) {
+        localStorage.setItem(`${NS}:username`, name);
+        setUsername(name);
+      } else {
+        setPinError("Code incorrect.");
+      }
+    } catch {
+      setPinError("Impossible de vérifier ton code, réessaie.");
+    } finally {
+      setCheckingUser(false);
+    }
   };
 
   const logout = async () => {
     localStorage.removeItem(`${NS}:username`);
     setUsername(null);
     setNameInput("");
+    setLoginStep("name");
+    setPinInput("");
+    setPinError("");
   };
 
   const [addMatchError, setAddMatchError] = useState(false);
@@ -597,23 +656,67 @@ export default function App() {
             PLCHB Pronostic
           </h1>
 
-          <p style={{ color: COLORS.paperDim }} className="text-sm mb-3">
-            Entre ton prénom et ton nom pour accéder aux pronostics.
-          </p>
-          <input
-            value={nameInput}
-            onChange={(e) => setNameInput(e.target.value.toLowerCase())}
-            onKeyDown={(e) => e.key === "Enter" && saveUsername()}
-            placeholder="prénom nom"
-            style={{ background: COLORS.ink, color: COLORS.paper, border: `1px solid ${COLORS.line}`, textTransform: "lowercase" }}
-            className="w-full rounded px-3 py-2 mb-3 outline-none focus:ring-2"
-          />
+          {loginStep === "name" && (
+            <>
+              <p style={{ color: COLORS.paperDim }} className="text-sm mb-3">
+                Entre ton prénom et ton nom pour accéder aux pronostics.
+              </p>
+              <input
+                value={nameInput}
+                onChange={(e) => setNameInput(e.target.value.toLowerCase())}
+                onKeyDown={(e) => e.key === "Enter" && handleNameContinue()}
+                placeholder="prénom nom"
+                style={{ background: COLORS.ink, color: COLORS.paper, border: `1px solid ${COLORS.line}`, textTransform: "lowercase" }}
+                className="w-full rounded px-3 py-2 mb-3 outline-none focus:ring-2"
+              />
+            </>
+          )}
+
+          {loginStep !== "name" && (
+            <>
+              <div style={{ color: COLORS.paperDim }} className="text-sm mb-2 flex items-center justify-between">
+                <span>
+                  Connexion : <span style={{ color: COLORS.paper }} className="font-medium">{nameInput.trim().toLowerCase()}</span>
+                </span>
+                <button onClick={backToName} style={{ color: COLORS.teal }} className="text-xs underline">
+                  Changer
+                </button>
+              </div>
+              <p style={{ color: COLORS.paperDim }} className="text-xs mb-2">
+                {loginStep === "create-pin"
+                  ? "Crée un code secret à 4 chiffres. Ce code te sera redemandé pour te reconnecter et protège ton nom."
+                  : "Entre ton code secret à 4 chiffres pour te reconnecter."}
+              </p>
+              <input
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                value={pinInput}
+                onChange={(e) => {
+                  setPinInput(e.target.value.replace(/\D/g, "").slice(0, 4));
+                  setPinError("");
+                }}
+                onKeyDown={(e) => e.key === "Enter" && (loginStep === "create-pin" ? confirmCreatePin() : confirmVerifyPin())}
+                placeholder="••••"
+                style={{ background: COLORS.ink, color: COLORS.paper, border: `1px solid ${COLORS.line}` }}
+                className="w-full rounded px-3 py-2 mb-2 outline-none focus:ring-2 text-center text-lg tracking-[0.5em]"
+              />
+            </>
+          )}
+
+          {pinError && (
+            <div style={{ color: COLORS.red }} className="text-xs mb-2">
+              {pinError}
+            </div>
+          )}
+
           <button
-            onClick={saveUsername}
-            style={{ background: COLORS.amber, color: COLORS.ink }}
+            onClick={loginStep === "name" ? handleNameContinue : loginStep === "create-pin" ? confirmCreatePin : confirmVerifyPin}
+            disabled={checkingUser}
+            style={{ background: COLORS.amber, color: COLORS.ink, opacity: checkingUser ? 0.6 : 1 }}
             className="w-full rounded py-2 font-semibold"
           >
-            Continuer
+            {checkingUser ? "…" : "Continuer"}
           </button>
         </div>
 
