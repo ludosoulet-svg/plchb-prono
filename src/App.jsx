@@ -960,7 +960,7 @@ export default function App() {
 
             <div className={lbScope === "season" ? "print-leaderboard" : ""}>
               {lbScope === "season" && (
-                <div style={{ fontFamily: "Oswald, sans-serif" }} className="text-base font-semibold mb-2">
+                <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber }} className="text-base font-semibold mb-2">
                   Classement général — PLCHB Pronostic
                 </div>
               )}
