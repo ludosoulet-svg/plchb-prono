@@ -1075,7 +1075,7 @@ export default function App() {
 
         {tab === "admin" && adminOn && (
           <>
-            <Section title="Licenciés inscrits">
+            <Section title="Licenciés inscrits" titleColor={COLORS.amber}>
               <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded-lg p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Users size={14} color={COLORS.amber} />
@@ -1110,7 +1110,7 @@ export default function App() {
               </div>
             </Section>
 
-            <Section title="Attribuer des points (classement général)">
+            <Section title="Attribuer des points (classement général)" titleColor={COLORS.amber}>
               <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded-lg p-4 space-y-2">
                 <div className="flex gap-2">
                   <input
@@ -1172,7 +1172,7 @@ export default function App() {
               )}
             </Section>
 
-            <Section title="Ajouter un match">
+            <Section title="Ajouter un match" titleColor={COLORS.amber}>
               <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded-lg p-4 space-y-2">
                 <div className="flex gap-2">
                   <input
@@ -1224,14 +1224,14 @@ export default function App() {
               </div>
             </Section>
 
-            <Section title="Matchs à venir">
+            <Section title="Matchs à venir" titleColor={COLORS.amber}>
               {upcoming.length === 0 && <EmptyState text="Aucun match à venir." />}
               {upcoming.map((m) => (
                 <AdminMatchRow key={m.id} match={m} onResult={setResult} onRemove={removeMatch} onEdit={editMatch} />
               ))}
             </Section>
 
-            <Section title="Matchs terminés">
+            <Section title="Matchs terminés" titleColor={COLORS.amber}>
               {finished.length === 0 && <EmptyState text="Aucun résultat saisi." />}
               {finished.map((m) => (
                 <div
@@ -1273,11 +1273,11 @@ export default function App() {
   );
 }
 
-function Section({ title, children }) {
+function Section({ title, titleColor = COLORS.paperDim, children }) {
   return (
     <div>
       <div
-        style={{ fontFamily: "Oswald, sans-serif", color: COLORS.paperDim, letterSpacing: "0.08em" }}
+        style={{ fontFamily: "Oswald, sans-serif", color: titleColor, letterSpacing: "0.08em" }}
         className="text-[11px] uppercase mb-2"
       >
         {title}
