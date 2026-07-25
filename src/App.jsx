@@ -1201,16 +1201,16 @@ export default function App() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }}
+            style={{ background: COLORS.paper, border: "1px solid #E2E2E2" }}
             className="w-[95vw] max-w-3xl rounded-lg p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-3">
-              <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber }} className="text-2xl font-semibold">
+              <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink }} className="text-2xl font-semibold">
                 {lbScope === "season" ? "Classement général" : "Classement de la semaine"}
               </div>
               <button
                 onClick={() => setShowLeaderboardModal(false)}
-                style={{ color: COLORS.paperDim }}
+                style={{ color: COLORS.ink }}
                 aria-label="Fermer le classement"
               >
                 <X size={18} />
@@ -1220,7 +1220,7 @@ export default function App() {
             {lbScope === "season" && (
               <button
                 onClick={() => window.print()}
-                style={{ color: COLORS.paperDim, border: `1px solid ${COLORS.line}` }}
+                style={{ color: "#6B7280", border: "1px solid #E2E2E2" }}
                 className="no-print w-full flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md mb-1"
               >
                 <Download size={13} />
@@ -1230,7 +1230,7 @@ export default function App() {
 
             <div className={lbScope === "season" ? "print-leaderboard" : ""}>
               {lbScope === "season" && (
-                <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber }} className="text-base font-semibold mb-2">
+                <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink }} className="text-base font-semibold mb-2">
                   Classement général — PLCHB Pronostic
                 </div>
               )}
@@ -1243,20 +1243,20 @@ export default function App() {
                   }
                 />
               ) : (
-                <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded-lg overflow-hidden">
+                <div style={{ background: "#FFFFFF", border: "1px solid #E2E2E2" }} className="rounded-lg overflow-hidden">
                   {leaderboard.map((row, i) => (
                     <div
                       key={row.user}
                       style={{
-                        borderBottom: i === leaderboard.length - 1 ? "none" : `1px solid ${COLORS.line}`,
-                        background: row.user === username ? "rgba(255,176,32,0.08)" : "transparent",
+                        borderBottom: i === leaderboard.length - 1 ? "none" : "1px solid #E2E2E2",
+                        background: row.user === username ? "rgba(255,176,32,0.12)" : "transparent",
                       }}
                       className="flex items-center px-4 py-3 gap-3"
                     >
                       <div
                         style={{
                           fontFamily: "Oswald, sans-serif",
-                          color: i === 0 ? COLORS.amber : COLORS.paperDim,
+                          color: i === 0 ? COLORS.amber : "#6B7280",
                           width: 24,
                         }}
                         className="text-lg font-semibold"
@@ -1264,10 +1264,10 @@ export default function App() {
                         {i + 1}
                       </div>
                       <div className="flex-1">
-                        <div style={{ color: COLORS.paper }} className="font-medium text-sm">
+                        <div style={{ color: COLORS.ink }} className="font-medium text-sm">
                           {row.user}
                         </div>
-                        <div style={{ color: COLORS.paperDim }} className="text-xs">
+                        <div style={{ color: "#6B7280" }} className="text-xs">
                           {row.played} pronostic{row.played > 1 ? "s" : ""} · {row.exact} exact{row.exact > 1 ? "s" : ""}
                           {row.bonus ? ` · +${row.bonus} bonus` : ""}
                         </div>
@@ -1279,7 +1279,7 @@ export default function App() {
                   ))}
                 </div>
               )}
-              <p style={{ color: COLORS.paperDim }} className="text-xs mt-3">
+              <p style={{ color: "#6B7280" }} className="text-xs mt-3">
                 Barème : score exact = 10 pts · bon vainqueur et bonne différence de buts = 5 pts · bon vainqueur = 2 pts · pronostic faux = 0 pt.
               </p>
             </div>
