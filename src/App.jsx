@@ -697,7 +697,7 @@ export default function App() {
           >
             PRONOSTIQUEZ SUR VOS ÉQUIPES DU CLUB
           </div>
-          <img src={NEW_CLUB_LOGO} alt="PLCHB Pronostic" className="h-32 mx-auto mb-4 object-contain" />
+          <img src={NEW_CLUB_LOGO} alt="PLCHB Pronostic" className="h-[640px] mx-auto mb-4 object-contain" />
 
           {loginStep === "name" && (
             <>
