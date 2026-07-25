@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Trophy, Plus, Lock, Shield, Check, X, ChevronRight, Users, Eye, EyeOff, Pencil, LogOut, Bell, BellOff, Download } from "lucide-react";
+import { Trophy, Plus, Lock, Shield, Check, X, ChevronRight, Users, Eye, EyeOff, Pencil, LogOut, Bell, BellOff, Download, Crown } from "lucide-react";
 import { supabase } from "./supabaseClient";
 
 const CLUB_LOGO = "/club-logo.png";
@@ -1268,8 +1268,13 @@ export default function App() {
                           color: COLORS.ink,
                           width: 24,
                         }}
-                        className="text-lg font-semibold"
+                        className={
+                          i === 0 && lbScope === "season"
+                            ? "flex flex-col items-center text-lg font-semibold"
+                            : "text-lg font-semibold"
+                        }
                       >
+                        {i === 0 && lbScope === "season" && <Crown size={16} color={COLORS.amber} />}
                         {i + 1}
                       </div>
                       <div className="flex-1">
