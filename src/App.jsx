@@ -142,6 +142,7 @@ export default function App() {
   const [adminError, setAdminError] = useState(false);
   const [showAdminInput, setShowAdminInput] = useState(false);
   const [lbScope, setLbScope] = useState("weekend"); // 'weekend' | 'season'
+  const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
   const [selectedWeekend, setSelectedWeekend] = useState(null);
   const [matchFilter, setMatchFilter] = useState("all"); // 'all' | 'mine'
   const [now, setNow] = useState(() => new Date());
@@ -919,7 +920,10 @@ export default function App() {
               ].map(([key, label]) => (
                 <button
                   key={key}
-                  onClick={() => setLbScope(key)}
+                  onClick={() => {
+                    setLbScope(key);
+                    setShowLeaderboardModal(true);
+                  }}
                   style={{
                     color: lbScope === key ? COLORS.ink : COLORS.paperDim,
                     background: lbScope === key ? COLORS.teal : "transparent",
@@ -946,73 +950,6 @@ export default function App() {
                 ))}
               </select>
             )}
-
-            {lbScope === "season" && (
-              <button
-                onClick={() => window.print()}
-                style={{ color: COLORS.paperDim, border: `1px solid ${COLORS.line}` }}
-                className="no-print w-full flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md mb-1"
-              >
-                <Download size={13} />
-                Télécharger le classement général en PDF
-              </button>
-            )}
-
-            <div className={lbScope === "season" ? "print-leaderboard" : ""}>
-              {lbScope === "season" && (
-                <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber }} className="text-base font-semibold mb-2">
-                  Classement général — PLCHB Pronostic
-                </div>
-              )}
-              {leaderboard.length === 0 ? (
-                <EmptyState
-                  text={
-                    lbScope === "weekend"
-                      ? "Aucun résultat saisi pour cette semaine pour l'instant."
-                      : "Le classement apparaîtra dès qu'un match sera terminé et pronostiqué."
-                  }
-                />
-              ) : (
-                <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded-lg overflow-hidden">
-                  {leaderboard.map((row, i) => (
-                    <div
-                      key={row.user}
-                      style={{
-                        borderBottom: i === leaderboard.length - 1 ? "none" : `1px solid ${COLORS.line}`,
-                        background: row.user === username ? "rgba(255,176,32,0.08)" : "transparent",
-                      }}
-                      className="flex items-center px-4 py-3 gap-3"
-                    >
-                      <div
-                        style={{
-                          fontFamily: "Oswald, sans-serif",
-                          color: i === 0 ? COLORS.amber : COLORS.paperDim,
-                          width: 24,
-                        }}
-                        className="text-lg font-semibold"
-                      >
-                        {i + 1}
-                      </div>
-                      <div className="flex-1">
-                        <div style={{ color: COLORS.paper }} className="font-medium text-sm">
-                          {row.user}
-                        </div>
-                        <div style={{ color: COLORS.paperDim }} className="text-xs">
-                          {row.played} pronostic{row.played > 1 ? "s" : ""} · {row.exact} exact{row.exact > 1 ? "s" : ""}
-                          {row.bonus ? ` · +${row.bonus} bonus` : ""}
-                        </div>
-                      </div>
-                      <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber }} className="text-lg font-semibold tabular-nums">
-                        {row.points}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <p style={{ color: COLORS.paperDim }} className="text-xs mt-3">
-                Barème : score exact = 10 pts · bon vainqueur et bonne différence de buts = 5 pts · bon vainqueur = 2 pts · pronostic faux = 0 pt.
-              </p>
-            </div>
           </Section>
         )}
 
@@ -1256,6 +1193,100 @@ export default function App() {
           </>
         )}
       </div>
+
+      {showLeaderboardModal && (
+        <div
+          onClick={() => setShowLeaderboardModal(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 60 }}
+          className="flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }}
+            className="w-full max-w-sm rounded-lg p-5 max-h-[85vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber }} className="text-base font-semibold">
+                {lbScope === "season" ? "Classement général" : "Classement de la semaine"}
+              </div>
+              <button
+                onClick={() => setShowLeaderboardModal(false)}
+                style={{ color: COLORS.paperDim }}
+                aria-label="Fermer le classement"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {lbScope === "season" && (
+              <button
+                onClick={() => window.print()}
+                style={{ color: COLORS.paperDim, border: `1px solid ${COLORS.line}` }}
+                className="no-print w-full flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md mb-1"
+              >
+                <Download size={13} />
+                Télécharger le classement général en PDF
+              </button>
+            )}
+
+            <div className={lbScope === "season" ? "print-leaderboard" : ""}>
+              {lbScope === "season" && (
+                <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber }} className="text-base font-semibold mb-2">
+                  Classement général — PLCHB Pronostic
+                </div>
+              )}
+              {leaderboard.length === 0 ? (
+                <EmptyState
+                  text={
+                    lbScope === "weekend"
+                      ? "Aucun résultat saisi pour cette semaine pour l'instant."
+                      : "Le classement apparaîtra dès qu'un match sera terminé et pronostiqué."
+                  }
+                />
+              ) : (
+                <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded-lg overflow-hidden">
+                  {leaderboard.map((row, i) => (
+                    <div
+                      key={row.user}
+                      style={{
+                        borderBottom: i === leaderboard.length - 1 ? "none" : `1px solid ${COLORS.line}`,
+                        background: row.user === username ? "rgba(255,176,32,0.08)" : "transparent",
+                      }}
+                      className="flex items-center px-4 py-3 gap-3"
+                    >
+                      <div
+                        style={{
+                          fontFamily: "Oswald, sans-serif",
+                          color: i === 0 ? COLORS.amber : COLORS.paperDim,
+                          width: 24,
+                        }}
+                        className="text-lg font-semibold"
+                      >
+                        {i + 1}
+                      </div>
+                      <div className="flex-1">
+                        <div style={{ color: COLORS.paper }} className="font-medium text-sm">
+                          {row.user}
+                        </div>
+                        <div style={{ color: COLORS.paperDim }} className="text-xs">
+                          {row.played} pronostic{row.played > 1 ? "s" : ""} · {row.exact} exact{row.exact > 1 ? "s" : ""}
+                          {row.bonus ? ` · +${row.bonus} bonus` : ""}
+                        </div>
+                      </div>
+                      <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber }} className="text-lg font-semibold tabular-nums">
+                        {row.points}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <p style={{ color: COLORS.paperDim }} className="text-xs mt-3">
+                Barème : score exact = 10 pts · bon vainqueur et bonne différence de buts = 5 pts · bon vainqueur = 2 pts · pronostic faux = 0 pt.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* bande boutique du club */}
       <a
