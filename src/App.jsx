@@ -1203,10 +1203,10 @@ export default function App() {
           <div
             onClick={(e) => e.stopPropagation()}
             style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }}
-            className="w-full max-w-sm rounded-lg p-5 max-h-[85vh] overflow-y-auto"
+            className="w-[95vw] max-w-3xl rounded-lg p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-3">
-              <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber }} className="text-base font-semibold">
+              <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber }} className="text-2xl font-semibold">
                 {lbScope === "season" ? "Classement général" : "Classement de la semaine"}
               </div>
               <button
