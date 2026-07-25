@@ -1274,6 +1274,11 @@ export default function App() {
                       </div>
                       <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink }} className="text-lg font-semibold tabular-nums">
                         {row.points}
+                        {lbScope === "season" && i > 0 && leaderboard[0].points - row.points > 0 && (
+                          <span style={{ color: "#6B7280", fontSize: "0.7em" }} className="ml-1">
+                            (-{leaderboard[0].points - row.points})
+                          </span>
+                        )}
                       </div>
                     </div>
                   ))}
