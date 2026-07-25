@@ -695,7 +695,7 @@ export default function App() {
             style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber, letterSpacing: "0.08em" }}
             className="text-xs uppercase text-center mb-3"
           >
-            PRONOSTICS DU CLUB
+            PRONOSTIQUEZ SUR VOS ÉQUIPES DU CLUB
           </div>
           <img src={NEW_CLUB_LOGO} alt="PLCHB Pronostic" className="h-32 mx-auto mb-4 object-contain" />
 
