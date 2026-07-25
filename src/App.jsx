@@ -1096,7 +1096,7 @@ export default function App() {
                       </div>
                       <div className="flex items-center gap-3">
                         <span style={{ color: COLORS.amber, fontFamily: "Oswald, sans-serif" }} className="text-sm font-semibold">
-                          +{pts}
+                          {pts >= 0 ? `+${pts}` : pts}
                         </span>
                         <button onClick={() => resetBonusPoints(name)} style={{ color: COLORS.red }} aria-label={`Retirer les points bonus de ${name}`}>
                           <X size={13} />
@@ -1269,7 +1269,7 @@ export default function App() {
                         </div>
                         <div style={{ color: "#6B7280" }} className="text-xs">
                           {row.played} pronostic{row.played > 1 ? "s" : ""} · {row.exact} exact{row.exact > 1 ? "s" : ""}
-                          {row.bonus ? ` · +${row.bonus} bonus` : ""}
+                          {row.bonus ? ` · ${row.bonus >= 0 ? `+${row.bonus}` : row.bonus} bonus` : ""}
                         </div>
                       </div>
                       <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink }} className="text-lg font-semibold tabular-nums">
