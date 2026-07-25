@@ -690,8 +690,8 @@ export default function App() {
         <HandExpertBanner />
         <div style={{ position: "fixed", top: 53, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
         <style>{FONTS}</style>
-        <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="w-full max-w-sm rounded-lg p-6 mt-[57px]">
-          <img src={NEW_CLUB_LOGO} alt="PLCHB Pronostic" className="h-[640px] mx-auto mb-4 object-contain" />
+        <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="w-full max-w-sm rounded-lg p-6 pt-[14px] mt-[57px]">
+          <img src={NEW_CLUB_LOGO} alt="PLCHB Pronostic" className="h-[640px] mx-auto mb-[14px] object-contain" />
           <div
             style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber, letterSpacing: "0.08em" }}
             className="text-xs uppercase text-center mb-3"
