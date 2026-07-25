@@ -1256,7 +1256,7 @@ export default function App() {
                       <div
                         style={{
                           fontFamily: "Oswald, sans-serif",
-                          color: i === 0 ? COLORS.amber : "#6B7280",
+                          color: COLORS.ink,
                           width: 24,
                         }}
                         className="text-lg font-semibold"
@@ -1272,7 +1272,7 @@ export default function App() {
                           {row.bonus ? ` · +${row.bonus} bonus` : ""}
                         </div>
                       </div>
-                      <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber }} className="text-lg font-semibold tabular-nums">
+                      <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink }} className="text-lg font-semibold tabular-nums">
                         {row.points}
                       </div>
                     </div>
