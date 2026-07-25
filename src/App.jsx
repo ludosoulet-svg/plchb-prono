@@ -1277,8 +1277,8 @@ export default function App() {
                         {i === 0 && lbScope === "season" && (
                           <Crown
                             size={16}
-                            color={COLORS.amber}
-                            style={{ position: "absolute", top: -16, left: "50%", transform: "translateX(-50%)" }}
+                            color="#B8860B"
+                            style={{ position: "absolute", top: -8, left: "50%", transform: "translateX(-50%)" }}
                           />
                         )}
                         <span
