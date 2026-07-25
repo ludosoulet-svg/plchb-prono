@@ -96,27 +96,26 @@ function fmtDate(iso) {
   }
 }
 
-// Groups matches by the Saturday of their weekend, so "classement du week-end"
-// can isolate one weekend's matches from the full season.
+// Groups matches by the Monday of their week, so "classement de la semaine"
+// can isolate one week's (lundi-dimanche) matches from the full season.
 function weekendKeyOf(iso) {
   const d = new Date(iso);
   const day = d.getDay(); // 0 = dimanche ... 6 = samedi
   let offset;
-  if (day === 6) offset = 0;
-  else if (day === 0) offset = -1;
-  else offset = 6 - day; // match programmé en semaine -> rattaché au samedi suivant
-  const sat = new Date(d);
-  sat.setDate(d.getDate() + offset);
-  return sat.toISOString().slice(0, 10);
+  if (day === 0) offset = -6;
+  else offset = 1 - day; // ramène au lundi de la semaine
+  const mon = new Date(d);
+  mon.setDate(d.getDate() + offset);
+  return mon.toISOString().slice(0, 10);
 }
 
 function weekendLabelOf(key) {
-  const sat = new Date(key);
-  const sun = new Date(sat);
-  sun.setDate(sat.getDate() + 1);
-  const satStr = sat.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
+  const mon = new Date(key);
+  const sun = new Date(mon);
+  sun.setDate(mon.getDate() + 6);
+  const monStr = mon.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
   const sunStr = sun.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
-  return `Semaine du ${satStr} au ${sunStr}`;
+  return `Semaine du ${monStr} au ${sunStr}`;
 }
 
 // Convertit une date ISO en valeur compatible avec un input type="datetime-local"
