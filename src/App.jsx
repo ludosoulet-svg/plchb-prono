@@ -27,6 +27,15 @@ const FONTS = `
   }
   .no-print { display: none !important; }
 }
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
 `;
 
 const COLORS = {
@@ -1485,6 +1494,7 @@ function ScoreInput({ value, onChange, disabled }) {
         border: `1px solid ${COLORS.line}`,
         fontFamily: "Oswald, sans-serif",
         opacity: disabled ? 0.5 : 1,
+        textAlign: "center",
       }}
       className="w-12 text-center rounded py-1.5 text-lg font-semibold tabular-nums outline-none"
     />
