@@ -1491,7 +1491,7 @@ function ScoreInput({ value, onChange, disabled }) {
       style={{
         background: COLORS.ink,
         color: COLORS.paper,
-        border: `1px solid ${COLORS.line}`,
+        border: `1px solid ${COLORS.amber}`,
         fontFamily: "Oswald, sans-serif",
         opacity: disabled ? 0.5 : 1,
         textAlign: "center",
