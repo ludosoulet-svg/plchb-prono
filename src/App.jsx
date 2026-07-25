@@ -1258,7 +1258,7 @@ export default function App() {
                       key={row.user}
                       style={{
                         borderBottom: i === leaderboard.length - 1 ? "none" : "1px solid #E2E2E2",
-                        background: row.user === username ? "rgba(255,176,32,0.12)" : "transparent",
+                        background: COLORS.paper,
                       }}
                       className="flex items-center px-4 py-3 gap-3"
                     >
