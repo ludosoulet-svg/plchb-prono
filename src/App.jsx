@@ -4,6 +4,7 @@ import { supabase } from "./supabaseClient";
 
 const CLUB_LOGO = "/club-logo.png";
 const HAND_EXPERT_LOGO = "/hand-expert-logo.png";
+const NEW_CLUB_LOGO = "/plchb-logo-final.png";
 
 const FONTS = `
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
@@ -661,7 +662,6 @@ export default function App() {
   const finished = matches.filter((m) => m.status === "finished").reverse();
 
   const matchesToBetCount = upcoming.filter((m) => !isLocked(m) && !myPrediction(m.id)).length;
-  const openMatchesCount = matches.filter((m) => m.status === "upcoming" && !isLocked(m)).length;
 
   useEffect(() => {
     if (tab !== "matches" || matches.length === 0) return;
@@ -691,26 +691,13 @@ export default function App() {
         <div style={{ position: "fixed", top: 53, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
         <style>{FONTS}</style>
         <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="w-full max-w-sm rounded-lg p-6 mt-[57px]">
-          <div className="flex items-center justify-between mb-3">
-            <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-14 w-14 object-contain" />
-            <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-14 w-14 object-contain" />
+          <div
+            style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber, letterSpacing: "0.08em" }}
+            className="text-xs uppercase text-center mb-3"
+          >
+            PRONOSTICS DU CLUB
           </div>
-          <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber, letterSpacing: "0.04em" }} className="text-xs uppercase mb-1 flex items-center gap-1">
-            <Lock size={12} /> Pronostics du club
-          </div>
-          <div className="flex items-center gap-2 mb-4">
-            <h1 style={{ color: COLORS.paper, fontFamily: "Oswald, sans-serif" }} className="text-2xl font-semibold">
-              PLCHB Pronostic
-            </h1>
-            {openMatchesCount > 0 && (
-              <span
-                style={{ background: COLORS.red, color: COLORS.paper }}
-                className="h-5 min-w-5 px-1 rounded-full text-[10px] font-bold flex items-center justify-center"
-              >
-                {openMatchesCount}
-              </span>
-            )}
-          </div>
+          <img src={NEW_CLUB_LOGO} alt="PLCHB Pronostic" className="h-32 mx-auto mb-4 object-contain" />
 
           {loginStep === "name" && (
             <>
