@@ -1266,18 +1266,27 @@ export default function App() {
                     >
                       <div
                         style={{
-                          fontFamily: "Oswald, sans-serif",
-                          color: COLORS.ink,
-                          width: 24,
+                          width: 32,
+                          height: 40,
+                          position: "relative",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
                         }}
-                        className={
-                          i === 0 && lbScope === "season"
-                            ? "flex flex-col items-center text-lg font-semibold"
-                            : "text-lg font-semibold"
-                        }
                       >
-                        {i === 0 && lbScope === "season" && <Crown size={16} color={COLORS.amber} />}
-                        {i + 1}
+                        {i === 0 && lbScope === "season" && (
+                          <Crown
+                            size={16}
+                            color={COLORS.amber}
+                            style={{ position: "absolute", top: -16, left: "50%", transform: "translateX(-50%)" }}
+                          />
+                        )}
+                        <span
+                          style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink }}
+                          className="text-lg font-semibold"
+                        >
+                          {i + 1}
+                        </span>
                       </div>
                       <div className="flex-1">
                         <div style={{ color: COLORS.ink }} className="font-medium text-sm">
