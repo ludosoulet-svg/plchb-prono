@@ -850,14 +850,6 @@ export default function App() {
             className="relative flex-1 rounded-md py-2 text-sm font-medium"
           >
             {label}
-            {key === "matches" && matchesToBetCount > 0 && tab !== "matches" && (
-              <span
-                style={{ background: COLORS.red, color: COLORS.paper }}
-                className="absolute -top-1.5 -right-1.5 h-5 min-w-5 px-1 rounded-full text-[10px] font-bold flex items-center justify-center"
-              >
-                {matchesToBetCount}
-              </span>
-            )}
           </button>
         ))}
       </div>
