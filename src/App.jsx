@@ -661,6 +661,7 @@ export default function App() {
   const finished = matches.filter((m) => m.status === "finished").reverse();
 
   const matchesToBetCount = upcoming.filter((m) => !isLocked(m) && !myPrediction(m.id)).length;
+  const openMatchesCount = matches.filter((m) => m.status === "upcoming" && !isLocked(m)).length;
 
   useEffect(() => {
     if (tab !== "matches" || matches.length === 0) return;
@@ -697,9 +698,19 @@ export default function App() {
           <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber, letterSpacing: "0.04em" }} className="text-xs uppercase mb-1 flex items-center gap-1">
             <Lock size={12} /> Pronostics du club
           </div>
-          <h1 style={{ color: COLORS.paper, fontFamily: "Oswald, sans-serif" }} className="text-2xl font-semibold mb-4">
-            PLCHB Pronostic
-          </h1>
+          <div className="flex items-center gap-2 mb-4">
+            <h1 style={{ color: COLORS.paper, fontFamily: "Oswald, sans-serif" }} className="text-2xl font-semibold">
+              PLCHB Pronostic
+            </h1>
+            {openMatchesCount > 0 && (
+              <span
+                style={{ background: COLORS.red, color: COLORS.paper }}
+                className="h-5 min-w-5 px-1 rounded-full text-[10px] font-bold flex items-center justify-center"
+              >
+                {openMatchesCount}
+              </span>
+            )}
+          </div>
 
           {loginStep === "name" && (
             <>
