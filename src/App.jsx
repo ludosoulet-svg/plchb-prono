@@ -705,7 +705,7 @@ export default function App() {
                 onKeyDown={(e) => e.key === "Enter" && handleNameContinue()}
                 placeholder="prénom nom"
                 style={{ background: COLORS.ink, color: COLORS.paper, border: `1px solid ${COLORS.line}`, textTransform: "lowercase" }}
-                className="w-full rounded px-3 py-2 mb-3 outline-none focus:ring-2"
+                className="w-full rounded px-3 py-2 mb-3 outline-none focus:ring-2 text-center"
               />
             </>
           )}
