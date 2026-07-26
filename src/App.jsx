@@ -684,8 +684,14 @@ export default function App() {
   if (!username) {
     return (
       <div
-        style={{ background: COLORS.ink, minHeight: "calc(100vh - 136px)", marginTop: 57, fontFamily: "Inter, sans-serif" }}
-        className="flex items-center justify-center px-6"
+        style={{
+          background: COLORS.ink,
+          height: "calc(100dvh - 136px)",
+          overflowY: "auto",
+          marginTop: 57,
+          fontFamily: "Inter, sans-serif",
+        }}
+        className="flex items-start justify-center px-6 pt-2"
       >
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
         <HandExpertBanner />
