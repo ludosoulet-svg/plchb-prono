@@ -759,20 +759,19 @@ export default function App() {
           </button>
         </div>
 
-        <img
-          src={SIGNATURE_TAG}
-          alt=""
-          style={{ position: "fixed", right: 12, bottom: 60, height: 42, zIndex: 45 }}
-          className="object-contain"
-        />
-
         <a
           href="https://www.helloasso.com/associations/plaisir-les-clayes-handball/boutiques/boutique-plaisir-les-clayes-hb"
           target="_blank"
           rel="noopener noreferrer"
-          style={{ background: COLORS.amber, borderTop: `1px solid ${COLORS.line}` }}
+          style={{ background: COLORS.amber, borderTop: `1px solid ${COLORS.line}`, position: "relative" }}
           className="fixed bottom-0 left-0 right-0 flex items-center justify-center py-3"
         >
+          <img
+            src={SIGNATURE_TAG}
+            alt=""
+            style={{ position: "absolute", bottom: "100%", right: 12, marginBottom: 8, height: 42, zIndex: 45, pointerEvents: "none" }}
+            className="object-contain"
+          />
           <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-xl font-semibold uppercase">
             Ici, votre boutique du club
           </span>
