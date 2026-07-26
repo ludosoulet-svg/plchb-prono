@@ -697,7 +697,7 @@ export default function App() {
           {loginStep === "name" && (
             <>
               <p style={{ color: COLORS.paperDim }} className="text-sm mb-3">
-                Entre ton prénom et ton nom pour accéder aux pronostics.
+                Entrez votre prénom et votre nom pour accéder aux pronostics
               </p>
               <input
                 value={nameInput}
