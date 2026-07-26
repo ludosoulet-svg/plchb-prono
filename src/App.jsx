@@ -4,7 +4,7 @@ import { supabase } from "./supabaseClient";
 
 const CLUB_LOGO = "/club-logo.png";
 const HAND_EXPERT_LOGO = "/hand-expert-logo.png";
-const NEW_CLUB_LOGO = "/plchb-logo-phrase-contour.png";
+const NEW_CLUB_LOGO = "/plchb-logo-final.png";
 
 const FONTS = `
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
