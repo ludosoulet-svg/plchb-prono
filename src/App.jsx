@@ -1294,7 +1294,10 @@ export default function App() {
                           {row.bonus ? ` · ${row.bonus >= 0 ? `+${row.bonus}` : row.bonus} bonus` : ""}
                         </div>
                       </div>
-                      <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink }} className="text-lg font-semibold tabular-nums">
+                      <div
+                        style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, width: 70, whiteSpace: "nowrap" }}
+                        className="text-lg font-semibold tabular-nums text-right shrink-0"
+                      >
                         {row.points}
                         {lbScope === "season" && i > 0 && leaderboard[0].points - row.points > 0 && (
                           <span style={{ color: "#6B7280", fontSize: "0.7em" }} className="ml-1">
