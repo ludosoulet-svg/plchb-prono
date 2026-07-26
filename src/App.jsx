@@ -5,6 +5,7 @@ import { supabase } from "./supabaseClient";
 const CLUB_LOGO = "/club-logo.png";
 const HAND_EXPERT_LOGO = "/hand-expert-logo.png";
 const NEW_CLUB_LOGO = "/plchb-logo-final.png";
+const SIGNATURE_TAG = "/ludo-signature-tag.png";
 
 const FONTS = `
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
@@ -757,6 +758,13 @@ export default function App() {
             {checkingUser ? "…" : "Continuer"}
           </button>
         </div>
+
+        <img
+          src={SIGNATURE_TAG}
+          alt=""
+          style={{ position: "fixed", right: 12, bottom: 60, height: 42, zIndex: 45 }}
+          className="object-contain"
+        />
 
         <a
           href="https://www.helloasso.com/associations/plaisir-les-clayes-handball/boutiques/boutique-plaisir-les-clayes-hb"
