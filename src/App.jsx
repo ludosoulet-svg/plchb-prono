@@ -4,6 +4,7 @@ import { supabase } from "./supabaseClient";
 
 const CLUB_LOGO = "/club-logo.png";
 const HAND_EXPERT_LOGO = "/hand-expert-logo.png";
+const NEW_CLUB_LOGO = "/plchb-logo-phrase-contour.png";
 
 const FONTS = `
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
@@ -690,9 +691,7 @@ export default function App() {
         <div style={{ position: "fixed", top: 53, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
         <style>{FONTS}</style>
         <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="w-full max-w-sm rounded-lg p-6 mt-[57px]">
-          <h1 style={{ color: COLORS.paper, fontFamily: "Oswald, sans-serif" }} className="text-2xl font-semibold text-center mb-4">
-            PLCHB Pronostic
-          </h1>
+          <img src={NEW_CLUB_LOGO} alt="PLCHB Pronostic" className="w-full max-w-[280px] mx-auto mb-4 object-contain" />
 
           {loginStep === "name" && (
             <>
