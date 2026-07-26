@@ -5,7 +5,6 @@ import { supabase } from "./supabaseClient";
 const CLUB_LOGO = "/club-logo.png";
 const HAND_EXPERT_LOGO = "/hand-expert-logo.png";
 const NEW_CLUB_LOGO = "/plchb-logo-final.png";
-const SIGNATURE_TAG = "/ludo-signature-tag.png";
 
 const FONTS = `
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
@@ -685,7 +684,7 @@ export default function App() {
   if (!username) {
     return (
       <div
-        style={{ background: COLORS.ink, minHeight: "calc(100vh - 156px)", marginTop: 57, fontFamily: "Inter, sans-serif" }}
+        style={{ background: COLORS.ink, minHeight: "calc(100vh - 136px)", marginTop: 57, fontFamily: "Inter, sans-serif" }}
         className="flex items-center justify-center px-6"
       >
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
@@ -760,17 +759,19 @@ export default function App() {
         </div>
 
         <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 45 }}>
-          <div className="flex justify-end pr-3 pb-1">
-            <img src={SIGNATURE_TAG} alt="" className="object-contain" style={{ height: 42 }} />
+          <div
+            style={{ background: COLORS.ink, display: "flex", justifyContent: "flex-end", paddingRight: 12, paddingBottom: 4 }}
+          >
+            <img src="/ludo-signature-tag.png" alt="" style={{ height: 42, objectFit: "contain" }} />
           </div>
           <a
             href="https://www.helloasso.com/associations/plaisir-les-clayes-handball/boutiques/boutique-plaisir-les-clayes-hb"
             target="_blank"
             rel="noopener noreferrer"
             style={{ background: COLORS.amber, borderTop: `1px solid ${COLORS.line}` }}
-            className="flex items-center justify-center py-3"
+            className="flex items-center justify-center py-1.5"
           >
-            <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-xl font-semibold uppercase">
+            <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-sm font-semibold uppercase">
               Ici, votre boutique du club
             </span>
           </a>
