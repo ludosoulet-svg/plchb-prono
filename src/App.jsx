@@ -661,8 +661,6 @@ export default function App() {
   const upcoming = matches.filter((m) => m.status === "upcoming");
   const finished = matches.filter((m) => m.status === "finished").reverse();
 
-  const matchesToBetCount = upcoming.filter((m) => !isLocked(m) && !myPrediction(m.id)).length;
-
   useEffect(() => {
     if (tab !== "matches" || matches.length === 0) return;
     const allIds = matches.map((m) => m.id);
@@ -800,19 +798,6 @@ export default function App() {
             </button>
           </div>
           <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-12 w-12 object-contain" />
-        </div>
-        <div className="flex items-center justify-center gap-2">
-          <h1 style={{ fontFamily: "Oswald, sans-serif", color: COLORS.paper }} className="text-xl font-semibold leading-tight">
-            À vos pronostics
-          </h1>
-          {matchesToBetCount > 0 && (
-            <span
-              style={{ background: COLORS.red, color: COLORS.paper }}
-              className="h-5 min-w-5 px-1 rounded-full text-[10px] font-bold flex items-center justify-center"
-            >
-              {matchesToBetCount}
-            </span>
-          )}
         </div>
       </div>
 
