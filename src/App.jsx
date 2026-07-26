@@ -685,12 +685,15 @@ export default function App() {
 
   if (!username) {
     return (
-      <div style={{ background: COLORS.ink, minHeight: "100vh", fontFamily: "Inter, sans-serif" }} className="flex items-center justify-center p-6 pb-12">
+      <div
+        style={{ background: COLORS.ink, minHeight: "calc(100vh - 110px)", marginTop: 57, fontFamily: "Inter, sans-serif" }}
+        className="flex items-center justify-center px-6"
+      >
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
         <HandExpertBanner />
         <div style={{ position: "fixed", top: 53, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
         <style>{FONTS}</style>
-        <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="w-full max-w-sm rounded p-6 mt-[57px]">
+        <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="w-full max-w-sm rounded p-6">
           <img src={NEW_CLUB_LOGO} alt="PLCHB Pronostic" className="w-full max-w-[280px] mx-auto mb-4 object-contain" />
 
           {loginStep === "name" && (
