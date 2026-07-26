@@ -685,7 +685,7 @@ export default function App() {
   if (!username) {
     return (
       <div
-        style={{ background: COLORS.ink, minHeight: "calc(100vh - 110px)", marginTop: 57, fontFamily: "Inter, sans-serif" }}
+        style={{ background: COLORS.ink, minHeight: "calc(100vh - 156px)", marginTop: 57, fontFamily: "Inter, sans-serif" }}
         className="flex items-center justify-center px-6"
       >
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
@@ -759,23 +759,22 @@ export default function App() {
           </button>
         </div>
 
-        <a
-          href="https://www.helloasso.com/associations/plaisir-les-clayes-handball/boutiques/boutique-plaisir-les-clayes-hb"
-          target="_blank"
-          rel="noopener noreferrer"
-          style={{ background: COLORS.amber, borderTop: `1px solid ${COLORS.line}`, position: "relative" }}
-          className="fixed bottom-0 left-0 right-0 flex items-center justify-center py-3"
-        >
-          <img
-            src={SIGNATURE_TAG}
-            alt=""
-            style={{ position: "absolute", bottom: "100%", right: 12, marginBottom: 8, height: 42, zIndex: 45, pointerEvents: "none" }}
-            className="object-contain"
-          />
-          <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-xl font-semibold uppercase">
-            Ici, votre boutique du club
-          </span>
-        </a>
+        <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 45 }}>
+          <div className="flex justify-end pr-3 pb-1">
+            <img src={SIGNATURE_TAG} alt="" className="object-contain" style={{ height: 42 }} />
+          </div>
+          <a
+            href="https://www.helloasso.com/associations/plaisir-les-clayes-handball/boutiques/boutique-plaisir-les-clayes-hb"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ background: COLORS.amber, borderTop: `1px solid ${COLORS.line}` }}
+            className="flex items-center justify-center py-3"
+          >
+            <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-xl font-semibold uppercase">
+              Ici, votre boutique du club
+            </span>
+          </a>
+        </div>
       </div>
     );
   }
