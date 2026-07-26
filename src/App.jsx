@@ -690,7 +690,7 @@ export default function App() {
         <HandExpertBanner />
         <div style={{ position: "fixed", top: 53, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
         <style>{FONTS}</style>
-        <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="w-full max-w-sm rounded-lg p-6 mt-[57px]">
+        <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="w-full max-w-sm rounded p-6 mt-[57px]">
           <img src={NEW_CLUB_LOGO} alt="PLCHB Pronostic" className="w-full max-w-[280px] mx-auto mb-4 object-contain" />
 
           {loginStep === "name" && (
@@ -828,7 +828,7 @@ export default function App() {
               background: tab === key ? COLORS.amber : "transparent",
               border: tab === key ? "none" : `1px solid ${COLORS.line}`,
             }}
-            className="relative flex-1 rounded-md py-2 text-sm font-medium"
+            className="relative flex-1 rounded py-2 text-sm font-medium"
           >
             {label}
           </button>
@@ -840,7 +840,7 @@ export default function App() {
           <button
             onClick={requestNotifPermission}
             style={{ color: COLORS.paperDim, border: `1px solid ${COLORS.line}` }}
-            className="w-full flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md"
+            className="w-full flex items-center justify-center gap-1.5 text-xs py-1.5 rounded"
           >
             <Bell size={13} />
             Activer les notifications pour les nouveaux matchs
@@ -864,7 +864,7 @@ export default function App() {
                     background: matchFilter === key ? COLORS.teal : "transparent",
                     border: matchFilter === key ? "none" : `1px solid ${COLORS.line}`,
                   }}
-                  className="flex-1 rounded-md py-1.5 text-xs font-medium"
+                  className="flex-1 rounded py-1.5 text-xs font-medium"
                 >
                   {label}
                 </button>
@@ -933,7 +933,7 @@ export default function App() {
                     background: lbScope === key ? COLORS.teal : "transparent",
                     border: lbScope === key ? "none" : `1px solid ${COLORS.line}`,
                   }}
-                  className="flex-1 rounded-md py-1.5 text-xs font-medium"
+                  className="flex-1 rounded py-1.5 text-xs font-medium"
                 >
                   {label}
                 </button>
@@ -958,7 +958,7 @@ export default function App() {
         )}
 
         {tab === "admin" && !adminOn && (
-          <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded-lg p-5">
+          <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-5">
             <div className="flex items-center gap-2 mb-3">
               <Shield size={16} color={COLORS.amber} />
               <div style={{ color: COLORS.paper }} className="font-medium text-sm">
@@ -1017,7 +1017,7 @@ export default function App() {
         {tab === "admin" && adminOn && (
           <>
             <Section title="Licenciés inscrits" titleColor={COLORS.amber}>
-              <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded-lg p-4">
+              <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Users size={14} color={COLORS.amber} />
                   <span style={{ color: COLORS.paper }} className="text-sm font-medium">
@@ -1029,7 +1029,7 @@ export default function App() {
                     Personne ne s'est encore connecté à l'appli.
                   </p>
                 ) : (
-                  <div style={{ border: `1px solid ${COLORS.line}` }} className="rounded-lg overflow-hidden">
+                  <div style={{ border: `1px solid ${COLORS.line}` }} className="rounded overflow-hidden">
                     {allLicencies.map((name, i) => (
                       <LicencieRow
                         key={name}
@@ -1052,7 +1052,7 @@ export default function App() {
             </Section>
 
             <Section title="Attribuer des points (classement général)" titleColor={COLORS.amber}>
-              <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded-lg p-4 space-y-2">
+              <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-4 space-y-2">
                 <div className="flex gap-2">
                   <input
                     value={bonusNameInput}
@@ -1089,7 +1089,7 @@ export default function App() {
               </div>
 
               {Object.keys(bonusPoints).length > 0 && (
-                <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded-lg overflow-hidden mt-2">
+                <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded overflow-hidden mt-2">
                   {Object.entries(bonusPoints).map(([name, pts], i, arr) => (
                     <div
                       key={name}
@@ -1114,7 +1114,7 @@ export default function App() {
             </Section>
 
             <Section title="Ajouter un match" titleColor={COLORS.amber}>
-              <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded-lg p-4 space-y-2">
+              <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-4 space-y-2">
                 <div className="flex gap-2">
                   <input
                     value={newHome}
@@ -1178,7 +1178,7 @@ export default function App() {
                 <div
                   key={m.id}
                   style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }}
-                  className="rounded-lg p-3 flex items-center justify-between mb-2"
+                  className="rounded p-3 flex items-center justify-between mb-2"
                 >
                   <div style={{ color: COLORS.paper }} className="text-sm">
                     {m.home} <span style={{ color: COLORS.amber }} className="font-semibold tabular-nums">{m.scoreH} - {m.scoreA}</span> {m.away}
@@ -1207,7 +1207,7 @@ export default function App() {
           <div
             onClick={(e) => e.stopPropagation()}
             style={{ background: COLORS.paper, border: "1px solid #E2E2E2" }}
-            className="w-[95vw] max-w-3xl rounded-lg p-6 max-h-[90vh] overflow-y-auto"
+            className="w-[95vw] max-w-3xl rounded p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-3">
               <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink }} className="text-2xl font-semibold">
@@ -1226,7 +1226,7 @@ export default function App() {
               <button
                 onClick={() => window.print()}
                 style={{ color: "#6B7280", border: "1px solid #E2E2E2" }}
-                className="no-print w-full flex items-center justify-center gap-1.5 text-xs py-1.5 rounded-md mb-1"
+                className="no-print w-full flex items-center justify-center gap-1.5 text-xs py-1.5 rounded mb-1"
               >
                 <Download size={13} />
                 Télécharger le classement général en PDF
@@ -1248,7 +1248,7 @@ export default function App() {
                   }
                 />
               ) : (
-                <div style={{ background: "#FFFFFF", border: "1px solid #E2E2E2" }} className="rounded-lg overflow-hidden">
+                <div style={{ background: "#FFFFFF", border: "1px solid #E2E2E2" }} className="rounded overflow-hidden">
                   {leaderboard.map((row, i) => (
                     <div
                       key={row.user}
@@ -1356,7 +1356,7 @@ function HandExpertBanner() {
 
 function EmptyState({ text }) {
   return (
-    <div style={{ background: COLORS.ink2, border: `1px dashed ${COLORS.line}`, color: COLORS.paperDim }} className="rounded-lg p-4 text-sm">
+    <div style={{ background: COLORS.ink2, border: `1px dashed ${COLORS.line}`, color: COLORS.paperDim }} className="rounded p-4 text-sm">
       {text}
     </div>
   );
@@ -1420,7 +1420,7 @@ function MatchCard({ match, locked, myPred, bettorsCount, onSubmit }) {
   const isSaved = myPred && h !== "" && a !== "" && Number(h) === myPred.h && Number(a) === myPred.a;
 
   return (
-    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded-lg p-4">
+    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-4">
       <div className="flex items-center justify-between mb-2">
         <div style={{ color: COLORS.paper }} className="text-xs">
           {fmtDate(match.date)}
@@ -1525,7 +1525,7 @@ function FinishedCard({ match, predictions, username }) {
     .sort((a, b) => b.pts - a.pts);
 
   return (
-    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded-lg p-4">
+    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-4">
       <div className="flex items-center justify-between mb-2">
         <div style={{ color: COLORS.paper }} className="text-xs">
           {fmtDate(match.date)}
@@ -1608,7 +1608,7 @@ function AdminMatchRow({ match, onResult, onRemove, onEdit }) {
 
   if (editing) {
     return (
-      <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.amber}` }} className="rounded-lg p-3 mb-2 space-y-2">
+      <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.amber}` }} className="rounded p-3 mb-2 space-y-2">
         <div className="flex gap-2">
           <input
             value={editHome}
@@ -1651,7 +1651,7 @@ function AdminMatchRow({ match, onResult, onRemove, onEdit }) {
   }
 
   return (
-    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded-lg p-3 mb-2">
+    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-3 mb-2">
       <div className="flex items-center justify-between mb-2">
         <div style={{ color: COLORS.paper }} className="text-sm">
           {match.home} <span style={{ color: COLORS.paperDim }}>vs</span> {match.away}
