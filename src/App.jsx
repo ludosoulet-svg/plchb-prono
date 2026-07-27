@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Trophy, Plus, Lock, Shield, Check, X, ChevronRight, Users, Eye, EyeOff, Pencil, LogOut, Bell, BellOff, Download, Crown } from "lucide-react";
+import { Trophy, Plus, Lock, Shield, Check, X, ChevronRight, Users, Eye, EyeOff, Pencil, LogOut, Download, Crown } from "lucide-react";
 import { supabase } from "./supabaseClient";
 
 const CLUB_LOGO = "/club-logo.png";
@@ -186,20 +186,11 @@ export default function App() {
   const [registeredUsers, setRegisteredUsers] = useState([]);
   const [userPins, setUserPins] = useState({}); // { [username]: pin | null }
   const [confirmingResetFor, setConfirmingResetFor] = useState(null);
-  const [notifPermission, setNotifPermission] = useState(
-    typeof Notification !== "undefined" ? Notification.permission : "unsupported"
-  );
   const [seenMatchIds, setSeenMatchIds] = useState([]);
   const [bonusPoints, setBonusPoints] = useState({}); // { [username]: points } — points attribués manuellement par l'admin
   const [bonusNameInput, setBonusNameInput] = useState("");
   const [bonusPointsInput, setBonusPointsInput] = useState("");
   const knownMatchIdsRef = useRef(null);
-
-  const requestNotifPermission = async () => {
-    if (typeof Notification === "undefined") return;
-    const perm = await Notification.requestPermission();
-    setNotifPermission(perm);
-  };
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -661,6 +652,8 @@ export default function App() {
   const upcoming = matches.filter((m) => m.status === "upcoming");
   const finished = matches.filter((m) => m.status === "finished").reverse();
 
+  const matchesToBetCount = upcoming.filter((m) => !isLocked(m) && !myPrediction(m.id)).length;
+
   useEffect(() => {
     if (tab !== "matches" || matches.length === 0) return;
     const allIds = matches.map((m) => m.id);
@@ -798,8 +791,18 @@ export default function App() {
         <div className="flex items-center justify-between mb-1">
           <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-12 w-12 object-contain" onClick={handleLogoTap} />
           <div className="flex flex-col items-center gap-1">
-            <div style={{ color: COLORS.amber }} className="text-lg font-bold">
-              {username}
+            <div className="flex items-center gap-1.5">
+              <div style={{ color: COLORS.amber }} className="text-lg font-bold">
+                {username}
+              </div>
+              {matchesToBetCount > 0 && (
+                <span
+                  style={{ background: COLORS.red, color: COLORS.paper }}
+                  className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center"
+                >
+                  {matchesToBetCount}
+                </span>
+              )}
             </div>
             <button
               onClick={logout}
@@ -835,19 +838,6 @@ export default function App() {
           </button>
         ))}
       </div>
-
-      {tab === "matches" && notifPermission !== "granted" && typeof Notification !== "undefined" && (
-        <div className="px-4 pt-2">
-          <button
-            onClick={requestNotifPermission}
-            style={{ color: COLORS.paperDim, border: `1px solid ${COLORS.line}` }}
-            className="w-full flex items-center justify-center gap-1.5 text-xs py-1.5 rounded"
-          >
-            <Bell size={13} />
-            Activer les notifications pour les nouveaux matchs
-          </button>
-        </div>
-      )}
 
       <div className="p-4 space-y-4 pb-40">
         {tab === "matches" && (
