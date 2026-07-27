@@ -153,7 +153,7 @@ export default function App() {
   const [lbScope, setLbScope] = useState("weekend"); // 'weekend' | 'season'
   const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
   const [selectedWeekend, setSelectedWeekend] = useState(null);
-  const [matchFilter, setMatchFilter] = useState("all"); // 'all' | 'mine'
+  const [matchFilter, setMatchFilter] = useState("toBet"); // 'toBet' | 'predicted' | 'closed'
   const [now, setNow] = useState(() => new Date());
   const [showAdminTab, setShowAdminTab] = useState(() => localStorage.getItem(`${NS}:showAdminTab`) === "true");
   const logoTapsRef = useRef([]);
@@ -842,10 +842,11 @@ export default function App() {
       <div className="p-4 space-y-4 pb-40">
         {tab === "matches" && (
           <>
-            <div className="flex gap-1 mb-1">
+            <div className="grid grid-cols-3 gap-1 mb-1">
               {[
-                ["all", "Tous les matchs"],
-                ["mine", "Mes pronostics"],
+                ["toBet", "Matchs à pronostiquer"],
+                ["predicted", "Matchs pronostiqués"],
+                ["closed", "Matchs clos"],
               ].map(([key, label]) => (
                 <button
                   key={key}
@@ -855,7 +856,7 @@ export default function App() {
                     background: matchFilter === key ? COLORS.teal : "transparent",
                     border: matchFilter === key ? "none" : `1px solid ${COLORS.line}`,
                   }}
-                  className="flex-1 rounded py-1.5 text-xs font-medium"
+                  className="rounded py-1.5 px-1 text-[11px] font-medium leading-tight"
                 >
                   {label}
                 </button>
@@ -863,44 +864,58 @@ export default function App() {
             </div>
 
             {(() => {
-              const visibleUpcoming = matchFilter === "mine" ? upcoming.filter((m) => myPrediction(m.id)) : upcoming;
-              const visibleFinished = matchFilter === "mine" ? finished.filter((m) => myPrediction(m.id)) : finished;
+              if (matchFilter === "closed") {
+                const closedMatches = matches
+                  .filter((m) => m.status === "finished" || isLocked(m))
+                  .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-              return (
-                <>
-                  {visibleUpcoming.length === 0 && visibleFinished.length === 0 && (
-                    <EmptyState
-                      text={
-                        matchFilter === "mine"
-                          ? "Tu n'as encore pronostiqué aucun match."
-                          : "Aucun match programmé pour l'instant. Un admin peut en ajouter dans l'onglet Admin."
-                      }
-                    />
-                  )}
-
-                  {visibleUpcoming.length > 0 && (
-                    <Section title="À venir">
-                      {visibleUpcoming.map((m) => (
+                return closedMatches.length === 0 ? (
+                  <EmptyState text="Aucun match clos pour l'instant." />
+                ) : (
+                  <Section title="Matchs clos">
+                    {closedMatches.map((m) =>
+                      m.status === "finished" ? (
+                        <FinishedCard key={m.id} match={m} predictions={predictions} username={username} />
+                      ) : (
                         <MatchCard
                           key={m.id}
                           match={m}
-                          locked={isLocked(m)}
+                          locked
                           myPred={myPrediction(m.id)}
                           bettorsCount={Object.keys(predictions).filter((key) => key.startsWith(`${m.id}__`)).length}
                           onSubmit={(h, a) => submitPrediction(m.id, h, a)}
                         />
-                      ))}
-                    </Section>
-                  )}
+                      )
+                    )}
+                  </Section>
+                );
+              }
 
-                  {visibleFinished.length > 0 && (
-                    <Section title="Terminés">
-                      {visibleFinished.map((m) => (
-                        <FinishedCard key={m.id} match={m} predictions={predictions} username={username} />
-                      ))}
-                    </Section>
-                  )}
-                </>
+              const visibleUpcoming = upcoming.filter((m) =>
+                matchFilter === "predicted" ? !isLocked(m) && myPrediction(m.id) : !isLocked(m) && !myPrediction(m.id)
+              );
+
+              return visibleUpcoming.length === 0 ? (
+                <EmptyState
+                  text={
+                    matchFilter === "predicted"
+                      ? "Tu n'as encore rien pronostiqué."
+                      : "Aucun match à pronostiquer pour l'instant."
+                  }
+                />
+              ) : (
+                <Section title={matchFilter === "predicted" ? "Matchs pronostiqués" : "Matchs à pronostiquer"}>
+                  {visibleUpcoming.map((m) => (
+                    <MatchCard
+                      key={m.id}
+                      match={m}
+                      locked={false}
+                      myPred={myPrediction(m.id)}
+                      bettorsCount={Object.keys(predictions).filter((key) => key.startsWith(`${m.id}__`)).length}
+                      onSubmit={(h, a) => submitPrediction(m.id, h, a)}
+                    />
+                  ))}
+                </Section>
               );
             })()}
           </>
