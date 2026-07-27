@@ -775,7 +775,7 @@ export default function App() {
             target="_blank"
             rel="noopener noreferrer"
             style={{ background: COLORS.amber, borderTop: `1px solid ${COLORS.line}` }}
-            className="flex items-center justify-center py-1.5"
+            className="flex items-center justify-center py-3.5"
           >
             <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-sm font-semibold uppercase">
               Ici, votre boutique du club
@@ -1323,9 +1323,9 @@ export default function App() {
         target="_blank"
         rel="noopener noreferrer"
         style={{ background: COLORS.amber, borderTop: `1px solid ${COLORS.line}` }}
-        className="fixed bottom-0 left-0 right-0 flex items-center justify-center py-3"
+        className="fixed bottom-0 left-0 right-0 flex items-center justify-center py-3.5"
       >
-        <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-xl font-semibold uppercase">
+        <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-sm font-semibold uppercase">
           Ici, votre boutique du club
         </span>
       </a>
