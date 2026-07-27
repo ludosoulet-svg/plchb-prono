@@ -768,7 +768,7 @@ export default function App() {
           <div
             style={{ background: COLORS.ink, display: "flex", justifyContent: "flex-end", paddingRight: 12, paddingBottom: 4 }}
           >
-            <img src="/ludo-signature-tag.png" alt="" style={{ height: 42, objectFit: "contain" }} />
+            <img src="/ludo-signature-tag.png" alt="" style={{ height: 21, objectFit: "contain" }} />
           </div>
           <a
             href="https://www.helloasso.com/associations/plaisir-les-clayes-handball/boutiques/boutique-plaisir-les-clayes-hb"
