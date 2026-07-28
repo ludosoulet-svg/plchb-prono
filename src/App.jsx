@@ -791,18 +791,8 @@ export default function App() {
         <div className="flex items-center justify-between mb-1">
           <img src={CLUB_LOGO} alt="Logo PLCHB" className="h-12 w-12 object-contain" onClick={handleLogoTap} />
           <div className="flex flex-col items-center gap-1">
-            <div className="flex items-center gap-1.5">
-              <div style={{ color: COLORS.amber }} className="text-lg font-bold">
-                {username}
-              </div>
-              {matchesToBetCount > 0 && (
-                <span
-                  style={{ background: COLORS.red, color: COLORS.paper }}
-                  className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center"
-                >
-                  {matchesToBetCount}
-                </span>
-              )}
+            <div style={{ color: COLORS.amber }} className="text-lg font-bold">
+              {username}
             </div>
             <button
               onClick={logout}
@@ -856,9 +846,17 @@ export default function App() {
                     background: matchFilter === key ? COLORS.teal : "transparent",
                     border: matchFilter === key ? "none" : `1px solid ${COLORS.line}`,
                   }}
-                  className="rounded py-1.5 px-1 text-[11px] font-medium leading-tight"
+                  className="relative rounded py-1.5 px-1 text-[11px] font-medium leading-tight"
                 >
                   {label}
+                  {key === "toBet" && matchesToBetCount > 0 && (
+                    <span
+                      style={{ background: COLORS.red, color: COLORS.paper }}
+                      className="absolute -top-1.5 -right-1.5 h-5 min-w-5 px-1 rounded-full text-[10px] font-bold flex items-center justify-center"
+                    >
+                      {matchesToBetCount}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
