@@ -1521,14 +1521,14 @@ function FinishedCard({ match, predictions, username }) {
         </div>
         <CategoryBadge category={match.category} />
       </div>
-      <div className="flex items-center justify-center gap-3 mb-3">
-        <div style={{ color: COLORS.paper }} className="text-sm font-medium">
+      <div className="flex items-center gap-2 mb-3">
+        <div style={{ color: COLORS.paper }} className="flex-1 text-sm font-medium">
           {match.home}
         </div>
         <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber }} className="text-2xl font-semibold tabular-nums">
           {match.scoreH} - {match.scoreA}
         </div>
-        <div style={{ color: COLORS.paper }} className="text-sm font-medium">
+        <div style={{ color: COLORS.paper }} className="flex-1 text-sm font-medium text-right">
           {match.away}
         </div>
       </div>
