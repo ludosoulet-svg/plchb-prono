@@ -106,26 +106,24 @@ function fmtDate(iso) {
   }
 }
 
-// Groups matches by the Monday of their week, so "classement de la semaine"
-// can isolate one week's (lundi-dimanche) matches from the full season.
-function weekendKeyOf(iso) {
-  const d = new Date(iso);
-  const day = d.getDay(); // 0 = dimanche ... 6 = samedi
-  let offset;
-  if (day === 0) offset = -6;
-  else offset = 1 - day; // ramène au lundi de la semaine
-  const mon = new Date(d);
-  mon.setDate(d.getDate() + offset);
-  return mon.toISOString().slice(0, 10);
-}
+// Mois de la saison 2026-2027, de septembre à juin, pour le classement mensuel.
+const SEASON_MONTHS = [
+  { key: "2026-09", label: "Septembre 2026" },
+  { key: "2026-10", label: "Octobre 2026" },
+  { key: "2026-11", label: "Novembre 2026" },
+  { key: "2026-12", label: "Décembre 2026" },
+  { key: "2027-01", label: "Janvier 2027" },
+  { key: "2027-02", label: "Février 2027" },
+  { key: "2027-03", label: "Mars 2027" },
+  { key: "2027-04", label: "Avril 2027" },
+  { key: "2027-05", label: "Mai 2027" },
+  { key: "2027-06", label: "Juin 2027" },
+];
 
-function weekendLabelOf(key) {
-  const mon = new Date(key);
-  const sun = new Date(mon);
-  sun.setDate(mon.getDate() + 6);
-  const monStr = mon.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
-  const sunStr = sun.toLocaleDateString("fr-FR", { day: "numeric", month: "long" });
-  return `Semaine du ${monStr} au ${sunStr}`;
+// Groupe les matchs par mois calendaire (heure locale) pour le classement mensuel.
+function monthKeyOf(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
 // Convertit une date ISO en valeur compatible avec un input type="datetime-local"
@@ -150,9 +148,13 @@ export default function App() {
   const [adminInput, setAdminInput] = useState("");
   const [adminError, setAdminError] = useState(false);
   const [showAdminInput, setShowAdminInput] = useState(false);
-  const [lbScope, setLbScope] = useState("weekend"); // 'weekend' | 'season'
+  const [lbScope, setLbScope] = useState("month"); // 'month' | 'season'
   const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
-  const [selectedWeekend, setSelectedWeekend] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const nowDate = new Date();
+    const currentKey = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, "0")}`;
+    return SEASON_MONTHS.some((m) => m.key === currentKey) ? currentKey : SEASON_MONTHS[0].key;
+  });
   const [matchFilter, setMatchFilter] = useState("toBet"); // 'toBet' | 'predicted' | 'closed'
   const [now, setNow] = useState(() => new Date());
   const [showAdminTab, setShowAdminTab] = useState(() => localStorage.getItem(`${NS}:showAdminTab`) === "true");
@@ -596,27 +598,6 @@ export default function App() {
     [predictions]
   );
 
-  // Toutes les dates de week-end présentes dans le calendrier, de la plus récente à la plus ancienne.
-  const weekendKeys = useMemo(() => {
-    const keys = new Set(matches.map((m) => weekendKeyOf(m.date)));
-    return Array.from(keys).sort((a, b) => new Date(b) - new Date(a));
-  }, [matches]);
-
-  useEffect(() => {
-    if (weekendKeys.length === 0) {
-      setSelectedWeekend(null);
-      return;
-    }
-    if (!selectedWeekend || !weekendKeys.includes(selectedWeekend)) {
-      // Par défaut : le week-end le plus récent qui a au moins un match terminé,
-      // sinon le week-end le plus proche.
-      const withResults = weekendKeys.find((k) =>
-        matches.some((m) => weekendKeyOf(m.date) === k && m.status === "finished")
-      );
-      setSelectedWeekend(withResults || weekendKeys[0]);
-    }
-  }, [weekendKeys, matches, selectedWeekend]);
-
   const seasonLeaderboard = useMemo(() => {
     const base = buildLeaderboard(matches);
     const byUser = Object.fromEntries(base.map((row) => [row.user, { ...row }]));
@@ -642,12 +623,11 @@ export default function App() {
     return Array.from(names).sort();
   }, [registeredUsers, predictions]);
 
-  const weekendLeaderboard = useMemo(() => {
-    if (!selectedWeekend) return [];
-    return buildLeaderboard(matches.filter((m) => weekendKeyOf(m.date) === selectedWeekend));
-  }, [matches, selectedWeekend, buildLeaderboard]);
+  const monthLeaderboard = useMemo(() => {
+    return buildLeaderboard(matches.filter((m) => monthKeyOf(m.date) === selectedMonth));
+  }, [matches, selectedMonth, buildLeaderboard]);
 
-  const leaderboard = lbScope === "season" ? seasonLeaderboard : weekendLeaderboard;
+  const leaderboard = lbScope === "season" ? seasonLeaderboard : monthLeaderboard;
 
   const upcoming = matches.filter((m) => m.status === "upcoming");
   const finished = matches.filter((m) => m.status === "finished").reverse();
@@ -923,7 +903,7 @@ export default function App() {
           <Section title="Classement" titleColor={COLORS.amber}>
             <div className="flex gap-1 mb-1">
               {[
-                ["weekend", "Cette semaine"],
+                ["month", "Par mois"],
                 ["season", "Saison"],
               ].map(([key, label]) => (
                 <button
@@ -944,16 +924,16 @@ export default function App() {
               ))}
             </div>
 
-            {lbScope === "weekend" && weekendKeys.length > 0 && (
+            {lbScope === "month" && (
               <select
-                value={selectedWeekend || ""}
-                onChange={(e) => setSelectedWeekend(e.target.value)}
+                value={selectedMonth}
+                onChange={(e) => setSelectedMonth(e.target.value)}
                 style={{ background: COLORS.ink2, color: COLORS.paper, border: `1px solid ${COLORS.line}` }}
                 className="w-full rounded px-3 py-2 text-sm outline-none mb-1"
               >
-                {weekendKeys.map((k) => (
-                  <option key={k} value={k}>
-                    {weekendLabelOf(k)}
+                {SEASON_MONTHS.map((m) => (
+                  <option key={m.key} value={m.key}>
+                    {m.label}
                   </option>
                 ))}
               </select>
@@ -1215,7 +1195,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between mb-3">
               <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink }} className="text-2xl font-semibold">
-                {lbScope === "season" ? "Classement général" : "Classement de la semaine"}
+                {lbScope === "season" ? "Classement général" : "Classement du mois"}
               </div>
               <button
                 onClick={() => setShowLeaderboardModal(false)}
@@ -1246,8 +1226,8 @@ export default function App() {
               {leaderboard.length === 0 ? (
                 <EmptyState
                   text={
-                    lbScope === "weekend"
-                      ? "Aucun résultat saisi pour cette semaine pour l'instant."
+                    lbScope === "month"
+                      ? "Aucun résultat saisi pour ce mois pour l'instant."
                       : "Le classement apparaîtra dès qu'un match sera terminé et pronostiqué."
                   }
                 />
