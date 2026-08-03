@@ -665,6 +665,8 @@ export default function App() {
     return Object.values(byUser).sort((a, b) => b.points - a.points || b.exact - a.exact);
   }, [matches, buildLeaderboard, bonusPoints]);
 
+  const myRank = seasonLeaderboard.findIndex((row) => row.user === username) + 1;
+
   // Combine le registre des inscriptions avec les noms trouvés dans les pronostics
   // (utile pour les licenciés qui s'étaient déjà connectés avant la mise en place du registre).
   const allLicencies = useMemo(() => {
@@ -826,6 +828,7 @@ export default function App() {
           <div className="flex flex-col items-center gap-1">
             <div style={{ color: COLORS.amber }} className="text-lg font-bold">
               {username}
+              {myRank > 0 && <span className="text-[0.5em] font-normal ml-1">({myRank}e)</span>}
             </div>
             <button
               onClick={logout}
