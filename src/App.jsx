@@ -136,6 +136,7 @@ function toLocalInputValue(iso) {
 export default function App() {
   const [username, setUsername] = useState(null);
   const [nameInput, setNameInput] = useState("");
+  const [emailInput, setEmailInput] = useState("");
   const [loginStep, setLoginStep] = useState("name"); // "name" | "create-pin" | "verify-pin"
   const [pinInput, setPinInput] = useState("");
   const [pinError, setPinError] = useState("");
@@ -457,11 +458,21 @@ export default function App() {
     return { error: null };
   };
 
+  // Vrai si ce prénom/nom n'est encore jamais apparu dans registeredUsers : on ne
+  // demande l'email qu'à cette toute première inscription, jamais aux connexions suivantes.
+  const isNewUser = useMemo(() => {
+    const name = nameInput.trim().toLowerCase();
+    return name !== "" && !registeredUsers.includes(name);
+  }, [nameInput, registeredUsers]);
+
+  const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.trim());
+
   // Étape 1 : on vérifie si ce licencié a déjà un compte (et un code) avant de savoir
   // s'il faut lui proposer de créer un code secret ou de saisir celui qu'il a déjà.
   const handleNameContinue = async () => {
     const name = nameInput.trim().toLowerCase();
     if (!name) return;
+    if (isNewUser && !isValidEmail) return;
     setCheckingUser(true);
     setPinError("");
     try {
@@ -487,8 +498,12 @@ export default function App() {
       return;
     }
     const name = nameInput.trim().toLowerCase();
+    const isFirstRegistration = !registeredUsers.includes(name);
+    const payload = isFirstRegistration
+      ? { username: name, pin: pinInput, email: emailInput.trim() }
+      : { username: name, pin: pinInput };
     try {
-      await supabase.from("registered_users").upsert({ username: name, pin: pinInput }, { onConflict: "username" });
+      await supabase.from("registered_users").upsert(payload, { onConflict: "username" });
     } catch {
       /* ignore */
     }
@@ -522,6 +537,7 @@ export default function App() {
     localStorage.removeItem(`${NS}:username`);
     setUsername(null);
     setNameInput("");
+    setEmailInput("");
     setLoginStep("name");
     setPinInput("");
     setPinError("");
@@ -741,6 +757,23 @@ export default function App() {
                 style={{ background: COLORS.ink, color: COLORS.paper, border: `1px solid ${COLORS.line}`, textTransform: "lowercase" }}
                 className="w-full rounded px-3 py-2 mb-3 outline-none focus:ring-2 text-center"
               />
+              {isNewUser && (
+                <>
+                  <input
+                    type="email"
+                    required
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleNameContinue()}
+                    placeholder="Ton adresse email"
+                    style={{ background: COLORS.ink, color: COLORS.paper, border: `1px solid ${COLORS.line}` }}
+                    className="w-full rounded px-3 py-2 mb-1 outline-none focus:ring-2 text-center"
+                  />
+                  <p style={{ color: COLORS.paperDim }} className="text-xs mb-3">
+                    Pour te recontacter si besoin (ne sera demandé qu'une seule fois).
+                  </p>
+                </>
+              )}
             </>
           )}
 
@@ -784,8 +817,12 @@ export default function App() {
 
           <button
             onClick={loginStep === "name" ? handleNameContinue : loginStep === "create-pin" ? confirmCreatePin : confirmVerifyPin}
-            disabled={checkingUser}
-            style={{ background: COLORS.amber, color: COLORS.ink, opacity: checkingUser ? 0.6 : 1 }}
+            disabled={checkingUser || (loginStep === "name" && isNewUser && !isValidEmail)}
+            style={{
+              background: COLORS.amber,
+              color: COLORS.ink,
+              opacity: checkingUser || (loginStep === "name" && isNewUser && !isValidEmail) ? 0.6 : 1,
+            }}
             className="w-full rounded py-2 font-semibold"
           >
             {checkingUser ? "…" : "Continuer"}
