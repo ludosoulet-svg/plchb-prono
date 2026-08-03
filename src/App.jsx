@@ -188,6 +188,7 @@ export default function App() {
   const [newCategory, setNewCategory] = useState(CATEGORIES[0]);
   const [registeredUsers, setRegisteredUsers] = useState([]);
   const [userPins, setUserPins] = useState({}); // { [username]: pin | null }
+  const [userEmails, setUserEmails] = useState({}); // { [username]: email | null }
   const [confirmingResetFor, setConfirmingResetFor] = useState(null);
   const [seenMatchIds, setSeenMatchIds] = useState([]);
   const [bonusPoints, setBonusPoints] = useState({}); // { [username]: points } — points attribués manuellement par l'admin
@@ -220,17 +221,21 @@ export default function App() {
     }
 
     try {
-      const { data, error } = await supabase.from("registered_users").select("username, pin");
+      const { data, error } = await supabase.from("registered_users").select("username, pin, email");
       if (error) throw error;
       setRegisteredUsers((data || []).map((r) => r.username).sort());
       const pins = {};
+      const emails = {};
       (data || []).forEach((r) => {
         pins[r.username] = r.pin || null;
+        emails[r.username] = r.email || null;
       });
       setUserPins(pins);
+      setUserEmails(emails);
     } catch {
       setRegisteredUsers([]);
       setUserPins({});
+      setUserEmails({});
     }
 
     try {
@@ -296,14 +301,17 @@ export default function App() {
       /* ignore */
     }
     try {
-      const { data, error } = await supabase.from("registered_users").select("username, pin");
+      const { data, error } = await supabase.from("registered_users").select("username, pin, email");
       if (error) throw error;
       setRegisteredUsers((data || []).map((r) => r.username).sort());
       const pins = {};
+      const emails = {};
       (data || []).forEach((r) => {
         pins[r.username] = r.pin || null;
+        emails[r.username] = r.email || null;
       });
       setUserPins(pins);
+      setUserEmails(emails);
     } catch {
       /* ignore */
     }
@@ -377,6 +385,11 @@ export default function App() {
       delete next[name];
       return next;
     });
+    setUserEmails((prev) => {
+      const next = { ...prev };
+      delete next[name];
+      return next;
+    });
     try {
       await supabase.from("registered_users").delete().eq("username", name);
     } catch {
@@ -417,6 +430,13 @@ export default function App() {
 
     setRegisteredUsers((prev) => prev.map((n) => (n === oldName ? cleanName : n)).sort());
     setUserPins((prev) => {
+      if (!(oldName in prev)) return prev;
+      const next = { ...prev };
+      next[cleanName] = next[oldName];
+      delete next[oldName];
+      return next;
+    });
+    setUserEmails((prev) => {
       if (!(oldName in prev)) return prev;
       const next = { ...prev };
       next[cleanName] = next[oldName];
@@ -509,6 +529,9 @@ export default function App() {
     }
     setRegisteredUsers((prev) => (prev.includes(name) ? prev : [...prev, name].sort()));
     setUserPins((prev) => ({ ...prev, [name]: pinInput }));
+    if (isFirstRegistration) {
+      setUserEmails((prev) => ({ ...prev, [name]: emailInput.trim() || null }));
+    }
     localStorage.setItem(`${NS}:username`, name);
     setUsername(name);
   };
@@ -1112,6 +1135,7 @@ export default function App() {
                         key={name}
                         name={name}
                         pin={userPins[name]}
+                        email={userEmails[name]}
                         isLast={i === allLicencies.length - 1}
                         confirming={confirmingResetFor === name}
                         onStartReset={() => setConfirmingResetFor(name)}
@@ -1445,7 +1469,7 @@ function EmptyState({ text }) {
   );
 }
 
-function LicencieRow({ name, pin, isLast, confirming, onStartReset, onCancelReset, onConfirmReset, onRemove, onRename }) {
+function LicencieRow({ name, pin, email, isLast, confirming, onStartReset, onCancelReset, onConfirmReset, onRemove, onRename }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(name);
   const [editError, setEditError] = useState("");
@@ -1506,6 +1530,9 @@ function LicencieRow({ name, pin, isLast, confirming, onStartReset, onCancelRese
           </div>
           <div style={{ color: COLORS.paperDim, fontFamily: "Oswald, sans-serif" }} className="text-xs tracking-wide">
             {pin ? `Code : ${pin}` : "Pas encore de code"}
+          </div>
+          <div style={{ color: COLORS.paperDim }} className="text-xs truncate">
+            {email || "Pas d'email renseigné"}
           </div>
         </div>
       )}
