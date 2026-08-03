@@ -404,6 +404,59 @@ export default function App() {
     }
   };
 
+  // Renomme un licencié (faute de frappe, etc.) en conservant ses pronostics,
+  // son code secret et ses points bonus déjà enregistrés.
+  const renameLicencie = async (oldName, newName) => {
+    const cleanName = newName.trim().toLowerCase();
+    if (!cleanName) return { error: "Le nom ne peut pas être vide." };
+    if (cleanName === oldName) return { error: null };
+    if (registeredUsers.filter((n) => n !== oldName).includes(cleanName)) {
+      return { error: "Ce nom est déjà utilisé." };
+    }
+
+    setRegisteredUsers((prev) => prev.map((n) => (n === oldName ? cleanName : n)).sort());
+    setUserPins((prev) => {
+      if (!(oldName in prev)) return prev;
+      const next = { ...prev };
+      next[cleanName] = next[oldName];
+      delete next[oldName];
+      return next;
+    });
+    setPredictions((prev) => {
+      const next = {};
+      Object.entries(prev).forEach(([key, val]) => {
+        const [matchId, user] = key.split("__");
+        next[user === oldName ? `${matchId}__${cleanName}` : key] = val;
+      });
+      return next;
+    });
+    setBonusPoints((prev) => {
+      if (!(oldName in prev)) return prev;
+      const next = { ...prev };
+      next[cleanName] = next[oldName];
+      delete next[oldName];
+      return next;
+    });
+
+    try {
+      await supabase.from("registered_users").update({ username: cleanName }).eq("username", oldName);
+    } catch {
+      /* ignore */
+    }
+    try {
+      await supabase.from("predictions").update({ username: cleanName }).eq("username", oldName);
+    } catch {
+      /* ignore */
+    }
+    try {
+      await supabase.from("bonus_points").update({ username: cleanName }).eq("username", oldName);
+    } catch {
+      /* ignore */
+    }
+
+    return { error: null };
+  };
+
   // Étape 1 : on vérifie si ce licencié a déjà un compte (et un code) avant de savoir
   // s'il faut lui proposer de créer un code secret ou de saisir celui qu'il a déjà.
   const handleNameContinue = async () => {
@@ -1025,6 +1078,7 @@ export default function App() {
                         onCancelReset={() => setConfirmingResetFor(null)}
                         onConfirmReset={() => resetPin(name)}
                         onRemove={() => removeLicencie(name)}
+                        onRename={(newName) => renameLicencie(name, newName)}
                       />
                     ))}
                   </div>
@@ -1351,22 +1405,81 @@ function EmptyState({ text }) {
   );
 }
 
-function LicencieRow({ name, pin, isLast, confirming, onStartReset, onCancelReset, onConfirmReset, onRemove }) {
+function LicencieRow({ name, pin, isLast, confirming, onStartReset, onCancelReset, onConfirmReset, onRemove, onRename }) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(name);
+  const [editError, setEditError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const startEdit = () => {
+    setEditValue(name);
+    setEditError("");
+    setIsEditing(true);
+  };
+
+  const cancelEdit = () => {
+    setIsEditing(false);
+    setEditValue(name);
+    setEditError("");
+  };
+
+  const saveEdit = async () => {
+    setSaving(true);
+    const result = await onRename(editValue);
+    setSaving(false);
+    if (result?.error) {
+      setEditError(result.error);
+    } else {
+      setIsEditing(false);
+      setEditError("");
+    }
+  };
+
   return (
     <div
       style={{ background: COLORS.ink, borderBottom: isLast ? "none" : `1px solid ${COLORS.line}` }}
       className="flex items-center justify-between gap-2 px-3 py-2"
     >
-      <div className="min-w-0">
-        <div style={{ color: COLORS.paper }} className="text-sm truncate">
-          {name}
+      {isEditing ? (
+        <div className="min-w-0 flex-1">
+          <input
+            value={editValue}
+            onChange={(e) => {
+              setEditValue(e.target.value);
+              setEditError("");
+            }}
+            onKeyDown={(e) => e.key === "Enter" && saveEdit()}
+            autoFocus
+            style={{ background: COLORS.ink2, color: COLORS.paper, border: `1px solid ${COLORS.line}`, textTransform: "lowercase" }}
+            className="w-full rounded px-2 py-1 text-sm outline-none"
+          />
+          {editError && (
+            <div style={{ color: COLORS.red }} className="text-xs mt-1">
+              {editError}
+            </div>
+          )}
         </div>
-        <div style={{ color: COLORS.paperDim, fontFamily: "Oswald, sans-serif" }} className="text-xs tracking-wide">
-          {pin ? `Code : ${pin}` : "Pas encore de code"}
+      ) : (
+        <div className="min-w-0">
+          <div style={{ color: COLORS.paper }} className="text-sm truncate">
+            {name}
+          </div>
+          <div style={{ color: COLORS.paperDim, fontFamily: "Oswald, sans-serif" }} className="text-xs tracking-wide">
+            {pin ? `Code : ${pin}` : "Pas encore de code"}
+          </div>
         </div>
-      </div>
+      )}
       <div className="flex items-center gap-2 shrink-0">
-        {confirming ? (
+        {isEditing ? (
+          <>
+            <button onClick={saveEdit} disabled={saving} style={{ color: COLORS.green }} aria-label="Enregistrer" className="flex items-center">
+              <Check size={14} />
+            </button>
+            <button onClick={cancelEdit} style={{ color: COLORS.paperDim }} aria-label="Annuler" className="flex items-center">
+              <X size={14} />
+            </button>
+          </>
+        ) : confirming ? (
           <>
             <span style={{ color: COLORS.paperDim }} className="text-xs">
               Confirmer ?
@@ -1385,6 +1498,9 @@ function LicencieRow({ name, pin, isLast, confirming, onStartReset, onCancelRese
                 Réinitialiser le code
               </button>
             )}
+            <button onClick={startEdit} style={{ color: COLORS.teal }} aria-label={`Modifier ${name}`} className="flex items-center">
+              <Pencil size={14} />
+            </button>
             <button onClick={onRemove} style={{ color: COLORS.red }} aria-label={`Supprimer ${name}`} className="flex items-center">
               <X size={14} />
             </button>
