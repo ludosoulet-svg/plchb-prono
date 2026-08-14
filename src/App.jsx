@@ -727,6 +727,7 @@ export default function App() {
   const finished = matches.filter((m) => m.status === "finished").reverse();
 
   const matchesToBetCount = upcoming.filter((m) => !isLocked(m) && !myPrediction(m.id)).length;
+  const matchesPredictedCount = upcoming.filter((m) => !isLocked(m) && myPrediction(m.id)).length;
 
   useEffect(() => {
     if (tab !== "matches" || matches.length === 0) return;
@@ -951,6 +952,14 @@ export default function App() {
                       className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center"
                     >
                       {matchesToBetCount}
+                    </span>
+                  )}
+                  {key === "predicted" && matchesPredictedCount > 0 && (
+                    <span
+                      style={{ background: COLORS.red, color: COLORS.paper }}
+                      className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center"
+                    >
+                      {matchesPredictedCount}
                     </span>
                   )}
                 </button>
