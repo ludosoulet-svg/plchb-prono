@@ -948,7 +948,7 @@ export default function App() {
                   {key === "toBet" && matchesToBetCount > 0 && (
                     <span
                       style={{ background: COLORS.red, color: COLORS.paper }}
-                      className="absolute -top-1.5 -right-1.5 h-5 min-w-5 px-1 rounded-full text-[10px] font-bold flex items-center justify-center"
+                      className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center"
                     >
                       {matchesToBetCount}
                     </span>
