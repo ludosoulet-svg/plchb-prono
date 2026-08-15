@@ -5,6 +5,7 @@ import { supabase } from "./supabaseClient";
 const CLUB_LOGO = "/club-logo.png";
 const HAND_EXPERT_LOGO = "/hand-expert-logo.png";
 const NEW_CLUB_LOGO = "/plchb-logo-final.png";
+const SHOP_BANNER_START = new Date("2026-09-01T00:00:00");
 
 const FONTS = `
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
@@ -739,6 +740,8 @@ export default function App() {
     }
   }, [tab, matches, seenMatchIds]);
 
+  const showShopBanner = new Date() >= SHOP_BANNER_START;
+
   if (loading) {
     return (
       <div style={{ background: COLORS.ink, minHeight: "100vh" }} className="flex items-center justify-center">
@@ -754,7 +757,7 @@ export default function App() {
       <div
         style={{
           background: COLORS.ink,
-          height: "calc(100dvh - 136px)",
+          height: `calc(100dvh - ${showShopBanner ? 136 : 82}px)`,
           overflowY: "auto",
           marginTop: 57,
           fontFamily: "Inter, sans-serif",
@@ -859,17 +862,19 @@ export default function App() {
           >
             <img src="/ludo-signature-tag.png" alt="" style={{ height: 21, objectFit: "contain" }} />
           </div>
-          <a
-            href="https://www.helloasso.com/associations/plaisir-les-clayes-handball/boutiques/boutique-plaisir-les-clayes-hb"
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ background: COLORS.amber, borderTop: `1px solid ${COLORS.line}` }}
-            className="flex items-center justify-center py-3.5"
-          >
-            <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-sm font-semibold uppercase">
-              Ici, votre boutique du club
-            </span>
-          </a>
+          {showShopBanner && (
+            <a
+              href="https://www.helloasso.com/associations/plaisir-les-clayes-handball/boutiques/boutique-plaisir-les-clayes-hb"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ background: COLORS.amber, borderTop: `1px solid ${COLORS.line}` }}
+              className="flex items-center justify-center py-3.5"
+            >
+              <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-sm font-semibold uppercase">
+                Ici, votre boutique du club
+              </span>
+            </a>
+          )}
         </div>
       </div>
     );
@@ -926,7 +931,7 @@ export default function App() {
         ))}
       </div>
 
-      <div className="p-4 space-y-4 pb-40">
+      <div className={`p-4 space-y-4 ${showShopBanner ? "pb-40" : "pb-4"}`}>
         {tab === "matches" && (
           <>
             <div className="grid grid-cols-3 gap-1 mb-1">
@@ -1428,17 +1433,19 @@ export default function App() {
       )}
 
       {/* bande boutique du club */}
-      <a
-        href="https://www.helloasso.com/associations/plaisir-les-clayes-handball/boutiques/boutique-plaisir-les-clayes-hb"
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{ background: COLORS.amber, borderTop: `1px solid ${COLORS.line}` }}
-        className="fixed bottom-0 left-0 right-0 flex items-center justify-center py-3.5"
-      >
-        <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-sm font-semibold uppercase">
-          Ici, votre boutique du club
-        </span>
-      </a>
+      {showShopBanner && (
+        <a
+          href="https://www.helloasso.com/associations/plaisir-les-clayes-handball/boutiques/boutique-plaisir-les-clayes-hb"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ background: COLORS.amber, borderTop: `1px solid ${COLORS.line}` }}
+          className="fixed bottom-0 left-0 right-0 flex items-center justify-center py-3.5"
+        >
+          <span style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, letterSpacing: "0.04em" }} className="text-sm font-semibold uppercase">
+            Ici, votre boutique du club
+          </span>
+        </a>
+      )}
     </div>
   );
 }
