@@ -419,61 +419,66 @@ export default function App() {
     }
   };
 
-  // Renomme un licencié (faute de frappe, etc.) en conservant ses pronostics,
-  // son code secret et ses points bonus déjà enregistrés.
-  const renameLicencie = async (oldName, newName) => {
+  // Met à jour le nom et/ou l'email d'un licencié (faute de frappe, etc.) en conservant
+  // ses pronostics, son code secret et ses points bonus déjà enregistrés. Toujours un
+  // UPDATE de la ligne existante dans registered_users, jamais un INSERT (pas de doublon).
+  const updateLicencie = async (oldName, newName, newEmail) => {
     const cleanName = newName.trim().toLowerCase();
+    const cleanEmail = newEmail.trim() || null;
     if (!cleanName) return { error: "Le nom ne peut pas être vide." };
-    if (cleanName === oldName) return { error: null };
-    if (registeredUsers.filter((n) => n !== oldName).includes(cleanName)) {
+    const nameChanged = cleanName !== oldName;
+    if (nameChanged && registeredUsers.filter((n) => n !== oldName).includes(cleanName)) {
       return { error: "Ce nom est déjà utilisé." };
     }
 
-    setRegisteredUsers((prev) => prev.map((n) => (n === oldName ? cleanName : n)).sort());
-    setUserPins((prev) => {
-      if (!(oldName in prev)) return prev;
-      const next = { ...prev };
-      next[cleanName] = next[oldName];
-      delete next[oldName];
-      return next;
-    });
-    setUserEmails((prev) => {
-      if (!(oldName in prev)) return prev;
-      const next = { ...prev };
-      next[cleanName] = next[oldName];
-      delete next[oldName];
-      return next;
-    });
-    setPredictions((prev) => {
-      const next = {};
-      Object.entries(prev).forEach(([key, val]) => {
-        const [matchId, user] = key.split("__");
-        next[user === oldName ? `${matchId}__${cleanName}` : key] = val;
+    if (nameChanged) {
+      setRegisteredUsers((prev) => prev.map((n) => (n === oldName ? cleanName : n)).sort());
+      setUserPins((prev) => {
+        if (!(oldName in prev)) return prev;
+        const next = { ...prev };
+        next[cleanName] = next[oldName];
+        delete next[oldName];
+        return next;
       });
-      return next;
-    });
-    setBonusPoints((prev) => {
-      if (!(oldName in prev)) return prev;
+      setPredictions((prev) => {
+        const next = {};
+        Object.entries(prev).forEach(([key, val]) => {
+          const [matchId, user] = key.split("__");
+          next[user === oldName ? `${matchId}__${cleanName}` : key] = val;
+        });
+        return next;
+      });
+      setBonusPoints((prev) => {
+        if (!(oldName in prev)) return prev;
+        const next = { ...prev };
+        next[cleanName] = next[oldName];
+        delete next[oldName];
+        return next;
+      });
+    }
+    setUserEmails((prev) => {
       const next = { ...prev };
-      next[cleanName] = next[oldName];
-      delete next[oldName];
+      if (nameChanged) delete next[oldName];
+      next[cleanName] = cleanEmail;
       return next;
     });
 
     try {
-      await supabase.from("registered_users").update({ username: cleanName }).eq("username", oldName);
+      await supabase.from("registered_users").update({ username: cleanName, email: cleanEmail }).eq("username", oldName);
     } catch {
       /* ignore */
     }
-    try {
-      await supabase.from("predictions").update({ username: cleanName }).eq("username", oldName);
-    } catch {
-      /* ignore */
-    }
-    try {
-      await supabase.from("bonus_points").update({ username: cleanName }).eq("username", oldName);
-    } catch {
-      /* ignore */
+    if (nameChanged) {
+      try {
+        await supabase.from("predictions").update({ username: cleanName }).eq("username", oldName);
+      } catch {
+        /* ignore */
+      }
+      try {
+        await supabase.from("bonus_points").update({ username: cleanName }).eq("username", oldName);
+      } catch {
+        /* ignore */
+      }
     }
 
     return { error: null };
@@ -1156,7 +1161,7 @@ export default function App() {
                         onCancelReset={() => setConfirmingResetFor(null)}
                         onConfirmReset={() => resetPin(name)}
                         onRemove={() => removeLicencie(name)}
-                        onRename={(newName) => renameLicencie(name, newName)}
+                        onSave={(newName, newEmail) => updateLicencie(name, newName, newEmail)}
                       />
                     ))}
                   </div>
@@ -1485,14 +1490,16 @@ function EmptyState({ text }) {
   );
 }
 
-function LicencieRow({ name, pin, email, isLast, confirming, onStartReset, onCancelReset, onConfirmReset, onRemove, onRename }) {
+function LicencieRow({ name, pin, email, isLast, confirming, onStartReset, onCancelReset, onConfirmReset, onRemove, onSave }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(name);
+  const [editEmailValue, setEditEmailValue] = useState(email || "");
   const [editError, setEditError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const startEdit = () => {
     setEditValue(name);
+    setEditEmailValue(email || "");
     setEditError("");
     setIsEditing(true);
   };
@@ -1500,12 +1507,13 @@ function LicencieRow({ name, pin, email, isLast, confirming, onStartReset, onCan
   const cancelEdit = () => {
     setIsEditing(false);
     setEditValue(name);
+    setEditEmailValue(email || "");
     setEditError("");
   };
 
   const saveEdit = async () => {
     setSaving(true);
-    const result = await onRename(editValue);
+    const result = await onSave(editValue, editEmailValue);
     setSaving(false);
     if (result?.error) {
       setEditError(result.error);
@@ -1521,7 +1529,7 @@ function LicencieRow({ name, pin, email, isLast, confirming, onStartReset, onCan
       className="flex items-center justify-between gap-2 px-3 py-2"
     >
       {isEditing ? (
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 space-y-1">
           <input
             value={editValue}
             onChange={(e) => {
@@ -1533,8 +1541,20 @@ function LicencieRow({ name, pin, email, isLast, confirming, onStartReset, onCan
             style={{ background: COLORS.ink2, color: COLORS.paper, border: `1px solid ${COLORS.line}`, textTransform: "lowercase" }}
             className="w-full rounded px-2 py-1 text-sm outline-none"
           />
+          <input
+            type="email"
+            value={editEmailValue}
+            onChange={(e) => {
+              setEditEmailValue(e.target.value);
+              setEditError("");
+            }}
+            onKeyDown={(e) => e.key === "Enter" && saveEdit()}
+            placeholder="Email"
+            style={{ background: COLORS.ink2, color: COLORS.paper, border: `1px solid ${COLORS.line}` }}
+            className="w-full rounded px-2 py-1 text-sm outline-none"
+          />
           {editError && (
-            <div style={{ color: COLORS.red }} className="text-xs mt-1">
+            <div style={{ color: COLORS.red }} className="text-xs">
               {editError}
             </div>
           )}
