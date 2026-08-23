@@ -6,6 +6,8 @@ const CLUB_LOGO = "/club-logo.png";
 const HAND_EXPERT_LOGO = "/hand-expert-logo.png";
 const NEW_CLUB_LOGO = "/plchb-logo-final.png";
 const SHOP_BANNER_START = new Date("2026-09-01T00:00:00");
+const PRIZE_MATCH_DATE = new Date("2026-08-29T19:00:00");
+const PRIZE_BANNER_END = new Date(PRIZE_MATCH_DATE.getTime() + 48 * 60 * 60 * 1000);
 
 const FONTS = `
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
@@ -939,6 +941,8 @@ export default function App() {
       <div className={`p-4 space-y-4 ${showShopBanner ? "pb-40" : "pb-4"}`}>
         {tab === "matches" && (
           <>
+            <PrizeBanner matches={matches} predictions={predictions} />
+
             <div className="grid grid-cols-3 gap-1 mb-1">
               {[
                 ["toBet", "Matchs à pronostiquer"],
@@ -1469,6 +1473,64 @@ function Section({ title, titleColor = COLORS.paperDim, children }) {
         {title}
       </div>
       <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function PrizeBanner({ matches, predictions }) {
+  if (new Date() >= PRIZE_BANNER_END) return null;
+
+  const prizeMatch = matches.find((m) => {
+    const d = new Date(m.date);
+    return d.getFullYear() === 2026 && d.getMonth() === 7 && d.getDate() === 29;
+  });
+
+  const winners =
+    prizeMatch && prizeMatch.status === "finished" && prizeMatch.scoreH != null && prizeMatch.scoreA != null
+      ? Object.entries(predictions)
+          .filter(
+            ([key, pred]) =>
+              key.startsWith(`${prizeMatch.id}__`) && pred.h === prizeMatch.scoreH && pred.a === prizeMatch.scoreA
+          )
+          .map(([key]) => key.split("__")[1])
+      : [];
+
+  return (
+    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.amber}` }} className="rounded p-4">
+      <div className="flex items-center gap-3">
+        <img
+          src="/sweat-lot-29-aout.jpg"
+          alt="Sweat à capuche noir Hummel, mis en jeu comme lot pour le match du 29 août"
+          style={{ background: COLORS.paper }}
+          className="h-20 w-20 rounded object-cover shrink-0"
+        />
+        <div className="flex-1 min-w-0">
+          <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber, letterSpacing: "0.06em" }} className="text-[11px] uppercase font-semibold">
+            {winners.length > 0 ? "Sweat Hummel gagné !" : "À gagner : un sweat Hummel"}
+          </div>
+          <div style={{ color: COLORS.paperDim }} className="text-xs mt-1 leading-snug">
+            Coupe de France — USDV Handball – PLCHB
+            <br />
+            Samedi 29 août – 19h00
+          </div>
+        </div>
+      </div>
+      <div style={{ borderTop: `1px solid ${COLORS.line}` }} className="mt-3 pt-2 flex items-center justify-between gap-2">
+        {winners.length > 0 ? (
+          <div style={{ color: COLORS.amber }} className="text-xs font-semibold">
+            Bravo à {winners.join(" et ")} !
+          </div>
+        ) : (
+          <>
+            <div style={{ color: COLORS.paper }} className="text-xs">
+              Trouvez le <strong>score exact</strong> et le sweat est pour vous.
+            </div>
+            <div style={{ color: COLORS.paperDim }} className="text-[10px] whitespace-nowrap">
+              Tailles : 176, 164, 152
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }
