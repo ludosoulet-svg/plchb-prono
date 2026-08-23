@@ -995,7 +995,9 @@ export default function App() {
                           match={m}
                           locked
                           myPred={myPrediction(m.id)}
-                          bettorsCount={Object.keys(predictions).filter((key) => key.startsWith(`${m.id}__`)).length}
+                          bettorsNames={Object.entries(predictions)
+                            .filter(([key]) => key.startsWith(`${m.id}__`))
+                            .map(([key]) => key.split("__")[1])}
                           onSubmit={(h, a) => submitPrediction(m.id, h, a)}
                         />
                       )
@@ -1024,7 +1026,9 @@ export default function App() {
                       match={m}
                       locked={false}
                       myPred={myPrediction(m.id)}
-                      bettorsCount={Object.keys(predictions).filter((key) => key.startsWith(`${m.id}__`)).length}
+                      bettorsNames={Object.entries(predictions)
+                        .filter(([key]) => key.startsWith(`${m.id}__`))
+                        .map(([key]) => key.split("__")[1])}
                       onSubmit={(h, a) => submitPrediction(m.id, h, a)}
                     />
                   ))}
@@ -1614,9 +1618,10 @@ function LicencieRow({ name, pin, email, isLast, confirming, onStartReset, onCan
   );
 }
 
-function MatchCard({ match, locked, myPred, bettorsCount, onSubmit }) {
+function MatchCard({ match, locked, myPred, bettorsNames, onSubmit }) {
   const [h, setH] = useState(myPred?.h ?? "");
   const [a, setA] = useState(myPred?.a ?? "");
+  const bettorsCount = bettorsNames.length;
 
   useEffect(() => {
     if (myPred) {
@@ -1670,12 +1675,26 @@ function MatchCard({ match, locked, myPred, bettorsCount, onSubmit }) {
           </button>
         )}
       </div>
-      <div style={{ color: COLORS.paperDim }} className="mt-2 text-xs flex items-center gap-1">
-        <Users size={12} />
-        {bettorsCount > 0
-          ? `${bettorsCount} licencié${bettorsCount > 1 ? "s ont" : " a"} déjà parié`
-          : "Personne n'a encore parié"}
-      </div>
+      {bettorsCount > 0 ? (
+        <details className="mt-2">
+          <summary style={{ color: COLORS.paperDim }} className="text-xs cursor-pointer flex items-center gap-1">
+            <Users size={12} />
+            {bettorsCount} licencié{bettorsCount > 1 ? "s ont" : " a"} déjà parié
+          </summary>
+          <div className="mt-2 space-y-1">
+            {bettorsNames.map((bettor) => (
+              <span key={bettor} style={{ color: COLORS.amber }} className="font-bold text-xs block">
+                {bettor}
+              </span>
+            ))}
+          </div>
+        </details>
+      ) : (
+        <div style={{ color: COLORS.paperDim }} className="mt-2 text-xs flex items-center gap-1">
+          <Users size={12} />
+          Personne n'a encore parié
+        </div>
+      )}
     </div>
   );
 }
