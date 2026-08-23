@@ -941,6 +941,7 @@ export default function App() {
       <div className={`p-4 space-y-4 ${showShopBanner ? "pb-40" : "pb-4"}`}>
         {tab === "matches" && (
           <>
+            <NotifBanner />
             <PrizeBanner matches={matches} predictions={predictions} />
 
             <div className="grid grid-cols-3 gap-1 mb-1">
@@ -1473,6 +1474,48 @@ function Section({ title, titleColor = COLORS.paperDim, children }) {
         {title}
       </div>
       <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function NotifBanner() {
+  const supported = typeof Notification !== "undefined";
+  const [permission, setPermission] = useState(supported ? Notification.permission : "unsupported");
+  const [dismissed, setDismissed] = useState(() => localStorage.getItem(`${NS}:notifDismissed`) === "true");
+
+  if (!supported || permission !== "default" || dismissed) return null;
+
+  const handleEnable = async () => {
+    try {
+      const result = await Notification.requestPermission();
+      setPermission(result);
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const handleDismiss = () => {
+    localStorage.setItem(`${NS}:notifDismissed`, "true");
+    setDismissed(true);
+  };
+
+  return (
+    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-3 flex items-center justify-between gap-3">
+      <div style={{ color: COLORS.paper }} className="text-xs">
+        Active les alertes pour être prévenu dès qu'un nouveau match est ajouté.
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        <button
+          onClick={handleEnable}
+          style={{ background: COLORS.amber, color: COLORS.ink }}
+          className="text-xs font-semibold px-3 py-1.5 rounded"
+        >
+          Activer
+        </button>
+        <button onClick={handleDismiss} style={{ color: COLORS.paperDim }} className="p-1">
+          <X size={14} />
+        </button>
+      </div>
     </div>
   );
 }
