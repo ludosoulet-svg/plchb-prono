@@ -8,6 +8,47 @@ const NEW_CLUB_LOGO = "/plchb-logo-final.png";
 const SHOP_BANNER_START = new Date("2026-09-01T00:00:00");
 const PRIZE_MATCH_DATE = new Date("2026-08-29T19:00:00");
 const PRIZE_BANNER_END = new Date(PRIZE_MATCH_DATE.getTime() + 48 * 60 * 60 * 1000);
+const VAPID_PUBLIC_KEY = "BOpzZO99HQnSZLg0sB1lravRWGBr3-E9Ea-qiif05X2osj2zpv0NC0xtGy4nSD0RP6IQ0gSuaPYEJz2nYavQl8k";
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map((c) => c.charCodeAt(0)));
+}
+
+async function subscribeToPush(username) {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
+  try {
+    const registration = await navigator.serviceWorker.register("/sw.js");
+
+    let permission = Notification.permission;
+    if (permission === "default") {
+      permission = await Notification.requestPermission();
+    }
+    if (permission !== "granted") return;
+
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+
+    await supabase.from("push_subscriptions").upsert(
+      {
+        username,
+        endpoint: subscription.endpoint,
+        p256dh: subscription.toJSON().keys.p256dh,
+        auth: subscription.toJSON().keys.auth,
+      },
+      { onConflict: "endpoint" }
+    );
+  } catch {
+    /* ignore */
+  }
+}
 
 const FONTS = `
 @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&display=swap');
@@ -601,6 +642,17 @@ export default function App() {
       const match = matchFromRow(data);
       setMatches((prev) => [...prev, match].sort((a, b) => new Date(a.date) - new Date(b.date)));
       knownMatchIdsRef.current?.add(match.id);
+
+      try {
+        await supabase.functions.invoke("send-match-notification", {
+          body: {
+            title: "Nouveau match à pronostiquer",
+            body: `${newHome.trim()} vs ${newAway.trim()} — pense à parier !`,
+          },
+        });
+      } catch (e) {
+        // ignore silently, ne bloque pas l'ajout du match si la notification échoue
+      }
     } catch {
       /* ignore */
     }
@@ -941,7 +993,7 @@ export default function App() {
       <div className={`p-4 space-y-4 ${showShopBanner ? "pb-40" : "pb-4"}`}>
         {tab === "matches" && (
           <>
-            <NotifBanner />
+            <NotifBanner username={username} />
             <PrizeBanner matches={matches} predictions={predictions} />
 
             <div className="grid grid-cols-3 gap-1 mb-1">
@@ -1478,7 +1530,7 @@ function Section({ title, titleColor = COLORS.paperDim, children }) {
   );
 }
 
-function NotifBanner() {
+function NotifBanner({ username }) {
   const supported = typeof Notification !== "undefined";
   const [permission, setPermission] = useState(supported ? Notification.permission : "unsupported");
   const [dismissed, setDismissed] = useState(() => localStorage.getItem(`${NS}:notifDismissed`) === "true");
@@ -1489,6 +1541,7 @@ function NotifBanner() {
     try {
       const result = await Notification.requestPermission();
       setPermission(result);
+      if (result === "granted") await subscribeToPush(username);
     } catch {
       /* ignore */
     }
