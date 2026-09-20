@@ -170,6 +170,12 @@ function monthKeyOf(iso) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
+// Affiche une date "YYYY-MM-DD" (colonne date Supabase) au format JJ/MM/AAAA.
+function fmtDay(day) {
+  const [y, m, d] = String(day).split("-");
+  return `${d}/${m}/${y}`;
+}
+
 // Convertit une date ISO en valeur compatible avec un input type="datetime-local"
 function toLocalInputValue(iso) {
   const d = new Date(iso);
@@ -193,7 +199,13 @@ export default function App() {
   const [adminInput, setAdminInput] = useState("");
   const [adminError, setAdminError] = useState(false);
   const [showAdminInput, setShowAdminInput] = useState(false);
-  const [lbScope, setLbScope] = useState("month"); // 'month' | 'season'
+  const [lbScope, setLbScope] = useState("month"); // 'month' | 'challenge' | 'season'
+  const [challenges, setChallenges] = useState([]); // [{ id, name, start_date, end_date }], du plus récent au plus ancien
+  const [selectedChallenge, setSelectedChallenge] = useState("");
+  const [challengeNameInput, setChallengeNameInput] = useState("");
+  const [challengeStartInput, setChallengeStartInput] = useState("");
+  const [challengeEndInput, setChallengeEndInput] = useState("");
+  const [addChallengeError, setAddChallengeError] = useState(false);
   const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const nowDate = new Date();
@@ -301,6 +313,14 @@ export default function App() {
       setBonusPoints({});
     }
 
+    try {
+      const { data, error } = await supabase.from("challenges").select("*").order("start_date", { ascending: false });
+      if (error) throw error;
+      setChallenges(data || []);
+    } catch {
+      setChallenges([]);
+    }
+
     setLoading(false);
   }, []);
 
@@ -367,6 +387,13 @@ export default function App() {
         map[row.username] = row.points;
       });
       setBonusPoints(map);
+    } catch {
+      /* ignore */
+    }
+    try {
+      const { data, error } = await supabase.from("challenges").select("*").order("start_date", { ascending: false });
+      if (error) throw error;
+      setChallenges(data || []);
     } catch {
       /* ignore */
     }
@@ -661,6 +688,37 @@ export default function App() {
     setNewDate("");
   };
 
+  const addChallenge = async () => {
+    if (!challengeNameInput.trim() || !challengeStartInput || !challengeEndInput || challengeEndInput < challengeStartInput) {
+      setAddChallengeError(true);
+      return;
+    }
+    setAddChallengeError(false);
+    try {
+      const { data, error } = await supabase
+        .from("challenges")
+        .insert({ name: challengeNameInput.trim(), start_date: challengeStartInput, end_date: challengeEndInput })
+        .select()
+        .single();
+      if (error) throw error;
+      setChallenges((prev) => [...prev, data].sort((a, b) => b.start_date.localeCompare(a.start_date)));
+      setChallengeNameInput("");
+      setChallengeStartInput("");
+      setChallengeEndInput("");
+    } catch {
+      setAddChallengeError(true);
+    }
+  };
+
+  const removeChallenge = async (id) => {
+    setChallenges((prev) => prev.filter((c) => c.id !== id));
+    try {
+      await supabase.from("challenges").delete().eq("id", id);
+    } catch {
+      /* ignore */
+    }
+  };
+
   const removeMatch = async (id) => {
     setMatches((prev) => prev.filter((m) => m.id !== id));
     try {
@@ -781,7 +839,23 @@ export default function App() {
     return buildLeaderboard(matches.filter((m) => monthKeyOf(m.date) === selectedMonth));
   }, [matches, selectedMonth, buildLeaderboard]);
 
-  const leaderboard = lbScope === "season" ? seasonLeaderboard : monthLeaderboard;
+  // Challenge sélectionné : par défaut le plus récent (la liste est triée par date de début décroissante).
+  const activeChallengeId = challenges.some((c) => c.id === selectedChallenge) ? selectedChallenge : challenges[0]?.id ?? "";
+
+  const challengeLeaderboard = useMemo(() => {
+    const challenge = challenges.find((c) => c.id === activeChallengeId);
+    if (!challenge) return [];
+    const start = new Date(`${challenge.start_date}T00:00:00`);
+    const end = new Date(`${challenge.end_date}T23:59:59`);
+    return buildLeaderboard(
+      matches.filter((m) => {
+        const d = new Date(m.date);
+        return d >= start && d <= end;
+      })
+    );
+  }, [matches, challenges, activeChallengeId, buildLeaderboard]);
+
+  const leaderboard = lbScope === "season" ? seasonLeaderboard : lbScope === "challenge" ? challengeLeaderboard : monthLeaderboard;
 
   const upcoming = matches.filter((m) => m.status === "upcoming");
   const finished = matches.filter((m) => m.status === "finished").reverse();
@@ -1100,6 +1174,7 @@ export default function App() {
             <div className="flex gap-1 mb-1">
               {[
                 ["month", "Par mois"],
+                ["challenge", "Challenge"],
                 ["season", "Saison"],
               ].map(([key, label]) => (
                 <button
@@ -1134,6 +1209,24 @@ export default function App() {
                 ))}
               </select>
             )}
+
+            {lbScope === "challenge" &&
+              (challenges.length === 0 ? (
+                <EmptyState text="Aucun challenge disponible pour l'instant." />
+              ) : (
+                <select
+                  value={activeChallengeId}
+                  onChange={(e) => setSelectedChallenge(e.target.value)}
+                  style={{ background: COLORS.ink2, color: COLORS.paper, border: `1px solid ${COLORS.line}` }}
+                  className="w-full rounded px-3 py-2 text-sm outline-none mb-1"
+                >
+                  {challenges.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              ))}
           </Section>
         )}
 
@@ -1295,6 +1388,76 @@ export default function App() {
               )}
             </Section>
 
+            <Section title="Challenges" titleColor={COLORS.amber}>
+              <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-4 space-y-2">
+                <input
+                  value={challengeNameInput}
+                  onChange={(e) => setChallengeNameInput(e.target.value)}
+                  placeholder="Nom du challenge (ex : 26-27 septembre)"
+                  style={{ background: COLORS.ink, color: COLORS.paper, border: `1px solid ${COLORS.line}` }}
+                  className="w-full rounded px-3 py-2 text-sm outline-none"
+                />
+                <div className="flex gap-2">
+                  <label style={{ color: COLORS.paperDim }} className="flex-1 text-xs">
+                    Début
+                    <input
+                      type="date"
+                      value={challengeStartInput}
+                      onChange={(e) => setChallengeStartInput(e.target.value)}
+                      style={{ background: COLORS.ink, color: COLORS.paper, border: `1px solid ${COLORS.line}` }}
+                      className="w-full rounded px-3 py-2 text-sm outline-none mt-1"
+                    />
+                  </label>
+                  <label style={{ color: COLORS.paperDim }} className="flex-1 text-xs">
+                    Fin
+                    <input
+                      type="date"
+                      value={challengeEndInput}
+                      onChange={(e) => setChallengeEndInput(e.target.value)}
+                      style={{ background: COLORS.ink, color: COLORS.paper, border: `1px solid ${COLORS.line}` }}
+                      className="w-full rounded px-3 py-2 text-sm outline-none mt-1"
+                    />
+                  </label>
+                </div>
+                {addChallengeError && (
+                  <div style={{ color: COLORS.red }} className="text-xs">
+                    Renseigne un nom et une plage de dates valide (la fin ne peut pas précéder le début).
+                  </div>
+                )}
+                <button
+                  onClick={addChallenge}
+                  style={{ background: COLORS.teal, color: COLORS.paper }}
+                  className="w-full rounded py-2 text-sm font-semibold flex items-center justify-center gap-1"
+                >
+                  <Plus size={14} /> Ajouter le challenge
+                </button>
+              </div>
+
+              {challenges.length > 0 && (
+                <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded overflow-hidden mt-2">
+                  {challenges.map((c, i) => (
+                    <div
+                      key={c.id}
+                      style={{ borderBottom: i === challenges.length - 1 ? "none" : `1px solid ${COLORS.line}` }}
+                      className="flex items-center justify-between px-3 py-2"
+                    >
+                      <div>
+                        <div style={{ color: COLORS.paper }} className="text-sm">
+                          {c.name}
+                        </div>
+                        <div style={{ color: COLORS.paperDim }} className="text-xs">
+                          {fmtDay(c.start_date)} → {fmtDay(c.end_date)}
+                        </div>
+                      </div>
+                      <button onClick={() => removeChallenge(c.id)} style={{ color: COLORS.red }} aria-label={`Supprimer le challenge ${c.name}`}>
+                        <X size={13} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Section>
+
             <Section title="Ajouter un match" titleColor={COLORS.amber}>
               <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-4 space-y-2">
                 <div className="flex gap-2">
@@ -1393,7 +1556,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between mb-3">
               <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink }} className="text-2xl font-semibold">
-                {lbScope === "season" ? "Classement général" : "Classement du mois"}
+                {lbScope === "season" ? "Classement général" : lbScope === "challenge" ? "Classement du challenge" : "Classement du mois"}
               </div>
               <button
                 onClick={() => setShowLeaderboardModal(false)}
@@ -1426,7 +1589,9 @@ export default function App() {
                   text={
                     lbScope === "month"
                       ? "Aucun résultat saisi pour ce mois pour l'instant."
-                      : "Le classement apparaîtra dès qu'un match sera terminé et pronostiqué."
+                      : lbScope === "challenge"
+                        ? "Aucun résultat saisi pour ce challenge pour l'instant."
+                        : "Le classement apparaîtra dès qu'un match sera terminé et pronostiqué."
                   }
                 />
               ) : (
