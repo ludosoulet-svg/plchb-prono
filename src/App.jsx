@@ -207,6 +207,8 @@ export default function App() {
   const [challengeStartInput, setChallengeStartInput] = useState("");
   const [challengeEndInput, setChallengeEndInput] = useState("");
   const [addChallengeError, setAddChallengeError] = useState(false);
+  const [confirmingNotifyFor, setConfirmingNotifyFor] = useState(null); // id du challenge en attente de confirmation d'envoi
+  const [notifyResult, setNotifyResult] = useState(null); // { id, ok }
   const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
   const [showPrizePopup, setShowPrizePopup] = useState(() => new Date() < PRIZE_POPUP_END);
   const [selectedMonth, setSelectedMonth] = useState(() => {
@@ -709,6 +711,22 @@ export default function App() {
       setChallengeEndInput("");
     } catch {
       setAddChallengeError(true);
+    }
+  };
+
+  // Envoie une notification push à tous les licenciés abonnés (via la fonction Edge).
+  const notifyChallenge = async (c) => {
+    setConfirmingNotifyFor(null);
+    try {
+      const { error } = await supabase.functions.invoke("send-match-notification", {
+        body: {
+          title: "Challenge pronostics",
+          body: `${c.name} (du ${fmtDay(c.start_date)} au ${fmtDay(c.end_date)}) — pronostique et grimpe au classement !`,
+        },
+      });
+      setNotifyResult({ id: c.id, ok: !error });
+    } catch {
+      setNotifyResult({ id: c.id, ok: false });
     }
   };
 
@@ -1450,10 +1468,39 @@ export default function App() {
                         <div style={{ color: COLORS.paperDim }} className="text-xs">
                           {fmtDay(c.start_date)} → {fmtDay(c.end_date)}
                         </div>
+                        {notifyResult?.id === c.id && (
+                          <div style={{ color: notifyResult.ok ? COLORS.green : COLORS.red }} className="text-xs">
+                            {notifyResult.ok ? "Notification envoyée." : "L'envoi de la notification a échoué."}
+                          </div>
+                        )}
                       </div>
-                      <button onClick={() => removeChallenge(c.id)} style={{ color: COLORS.red }} aria-label={`Supprimer le challenge ${c.name}`}>
-                        <X size={13} />
-                      </button>
+                      <div className="flex items-center gap-3">
+                        {confirmingNotifyFor === c.id ? (
+                          <div className="flex items-center gap-2 text-xs">
+                            <span style={{ color: COLORS.paperDim }}>Envoyer à tous ?</span>
+                            <button onClick={() => notifyChallenge(c)} style={{ color: COLORS.amber }} className="font-semibold underline">
+                              Oui
+                            </button>
+                            <button onClick={() => setConfirmingNotifyFor(null)} style={{ color: COLORS.paperDim }} className="underline">
+                              Non
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setNotifyResult(null);
+                              setConfirmingNotifyFor(c.id);
+                            }}
+                            style={{ color: COLORS.amber, border: `1px solid ${COLORS.amber}` }}
+                            className="text-xs px-2 py-0.5 rounded"
+                          >
+                            Notifier
+                          </button>
+                        )}
+                        <button onClick={() => removeChallenge(c.id)} style={{ color: COLORS.red }} aria-label={`Supprimer le challenge ${c.name}`}>
+                          <X size={13} />
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
