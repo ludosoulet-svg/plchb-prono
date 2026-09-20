@@ -1901,7 +1901,7 @@ function PrizePopup({ onClose }) {
         </div>
 
         <div style={{ color: COLORS.paper }} className="text-sm mt-4">
-          Sois dans les <strong>trois premiers</strong> du classement et le <strong style={{ color: COLORS.amber }}>sweat</strong> est à toi.
+          Sois dans les <strong>trois premiers</strong> du classement du week-end et le <strong style={{ color: COLORS.amber }}>sweat</strong> est à toi.
         </div>
         <div style={{ color: COLORS.paperDim }} className="text-xs mt-1">
           3 tailles disponibles : 176, 164, 152
