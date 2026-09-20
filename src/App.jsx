@@ -8,7 +8,7 @@ const NEW_CLUB_LOGO = "/plchb-logo-final.png";
 const SHOP_BANNER_START = new Date("2026-09-01T00:00:00");
 const PRIZE_MATCH_DATE = new Date("2026-08-29T19:00:00");
 const PRIZE_BANNER_END = new Date(PRIZE_MATCH_DATE.getTime() + 48 * 60 * 60 * 1000);
-const PRIZE_POPUP_END = new Date("2026-09-27T23:59:59");
+const PRIZE_POPUP_END = new Date("2026-09-27T18:00:00");
 const VAPID_PUBLIC_KEY = "BOpzZO99HQnSZLg0sB1lravRWGBr3-E9Ea-qiif05X2osj2zpv0NC0xtGy4nSD0RP6IQ0gSuaPYEJz2nYavQl8k";
 
 function urlBase64ToUint8Array(base64String) {
