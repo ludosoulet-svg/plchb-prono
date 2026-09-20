@@ -8,6 +8,7 @@ const NEW_CLUB_LOGO = "/plchb-logo-final.png";
 const SHOP_BANNER_START = new Date("2026-09-01T00:00:00");
 const PRIZE_MATCH_DATE = new Date("2026-08-29T19:00:00");
 const PRIZE_BANNER_END = new Date(PRIZE_MATCH_DATE.getTime() + 48 * 60 * 60 * 1000);
+const PRIZE_POPUP_END = new Date("2026-09-27T23:59:59");
 const VAPID_PUBLIC_KEY = "BOpzZO99HQnSZLg0sB1lravRWGBr3-E9Ea-qiif05X2osj2zpv0NC0xtGy4nSD0RP6IQ0gSuaPYEJz2nYavQl8k";
 
 function urlBase64ToUint8Array(base64String) {
@@ -207,6 +208,7 @@ export default function App() {
   const [challengeEndInput, setChallengeEndInput] = useState("");
   const [addChallengeError, setAddChallengeError] = useState(false);
   const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
+  const [showPrizePopup, setShowPrizePopup] = useState(() => new Date() < PRIZE_POPUP_END);
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const nowDate = new Date();
     const currentKey = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, "0")}`;
@@ -1543,6 +1545,8 @@ export default function App() {
         )}
       </div>
 
+      {showPrizePopup && <PrizePopup onClose={() => setShowPrizePopup(false)} />}
+
       {showLeaderboardModal && (
         <div
           onClick={() => setShowLeaderboardModal(false)}
@@ -1791,6 +1795,78 @@ function PrizeBanner({ matches, predictions }) {
             </div>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+function PrizePopup({ onClose }) {
+  return (
+    <div
+      onClick={onClose}
+      style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 70 }}
+      className="flex items-center justify-center p-4"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-label="Trois sweats Hummel à gagner"
+        style={{ background: COLORS.ink2, border: `1px solid ${COLORS.amber}` }}
+        className="relative w-full max-w-sm rounded p-5 max-h-[92vh] overflow-y-auto text-center"
+      >
+        <button onClick={onClose} style={{ color: COLORS.paperDim }} className="absolute top-3 right-3 p-1" aria-label="Fermer">
+          <X size={18} />
+        </button>
+
+        <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.paperDim, letterSpacing: "0.14em" }} className="text-[11px] uppercase mb-2">
+          PLCHB Pronostic
+        </div>
+        <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.paper }} className="text-2xl font-semibold leading-tight">
+          Trois sweats <span style={{ color: COLORS.amber }}>Hummel</span>
+          <br />à gagner
+        </div>
+        <div style={{ color: COLORS.paperDim }} className="text-sm mt-2 mb-3">
+          Pronostiquez et tentez de repartir avec.
+        </div>
+
+        <div
+          style={{ background: COLORS.amber, color: COLORS.ink, fontFamily: "Oswald, sans-serif", letterSpacing: "0.06em" }}
+          className="inline-block rounded-2xl px-4 py-1.5 text-xs font-semibold uppercase leading-snug mb-4"
+        >
+          Challenge pronostics du week-end du 26 et 27 septembre
+        </div>
+
+        <div style={{ background: COLORS.paper }} className="relative rounded p-3">
+          <span
+            style={{ background: COLORS.amber, color: COLORS.ink, fontFamily: "Oswald, sans-serif", letterSpacing: "0.08em" }}
+            className="absolute top-2 left-2 rounded px-2 py-0.5 text-[10px] font-semibold uppercase"
+          >
+            À gagner
+          </span>
+          <img
+            src="/sweat-lot-29-aout.jpg"
+            alt="Sweat à capuche noir Hummel, mis en jeu comme lot"
+            className="mx-auto max-h-64 w-full object-contain"
+          />
+          <div style={{ color: COLORS.ink, fontFamily: "Oswald, sans-serif", letterSpacing: "0.08em" }} className="text-[11px] uppercase mt-2">
+            Hummel — Sweat à capuche
+          </div>
+        </div>
+
+        <div style={{ color: COLORS.paper }} className="text-sm mt-4">
+          Sois dans les <strong>trois premiers</strong> du classement et le <strong style={{ color: COLORS.amber }}>sweat</strong> est à toi.
+        </div>
+        <div style={{ color: COLORS.paperDim }} className="text-xs mt-1">
+          3 tailles disponibles : 176, 164, 152
+        </div>
+
+        <button
+          onClick={onClose}
+          style={{ background: COLORS.amber, color: COLORS.ink }}
+          className="w-full rounded py-2 mt-4 text-sm font-semibold"
+        >
+          C'est parti !
+        </button>
       </div>
     </div>
   );
