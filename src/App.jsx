@@ -238,25 +238,15 @@ export default function App() {
     if (tab === "admin" && !showAdminTab) setTab("matches");
   }, [tab, showAdminTab]);
 
-  // Annonce du challenge : affichée une seule fois par licencié (et par appareil).
+  // Annonce du challenge : affichée à chaque ouverture de l'appli (une fois les matchs chargés),
+  // jusqu'à la fin du challenge.
   useEffect(() => {
     if (!username || matches.length === 0 || announcementCheckedRef.current === username) return;
     announcementCheckedRef.current = username;
-    try {
-      if (!localStorage.getItem(`${NS}:seenChallengeAnnouncement:${username}`)) setShowChallengeAnnouncement(true);
-    } catch {
-      /* ignore */
-    }
+    if (new Date() < PRIZE_POPUP_END) setShowChallengeAnnouncement(true);
   }, [username, matches]);
 
-  const closeChallengeAnnouncement = () => {
-    setShowChallengeAnnouncement(false);
-    try {
-      localStorage.setItem(`${NS}:seenChallengeAnnouncement:${username}`, "true");
-    } catch {
-      /* ignore */
-    }
-  };
+  const closeChallengeAnnouncement = () => setShowChallengeAnnouncement(false);
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 15000);
