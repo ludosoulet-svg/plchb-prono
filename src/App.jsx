@@ -211,6 +211,8 @@ export default function App() {
   const [notifyResult, setNotifyResult] = useState(null); // { id, ok }
   const [showLeaderboardModal, setShowLeaderboardModal] = useState(false);
   const [showPrizePopup, setShowPrizePopup] = useState(() => new Date() < PRIZE_POPUP_END);
+  const [showChallengeAnnouncement, setShowChallengeAnnouncement] = useState(false);
+  const announcementCheckedRef = useRef(null); // username pour lequel l'annonce a déjà été évaluée
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const nowDate = new Date();
     const currentKey = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, "0")}`;
@@ -235,6 +237,26 @@ export default function App() {
   useEffect(() => {
     if (tab === "admin" && !showAdminTab) setTab("matches");
   }, [tab, showAdminTab]);
+
+  // Annonce du challenge : affichée une seule fois par licencié (et par appareil).
+  useEffect(() => {
+    if (!username || matches.length === 0 || announcementCheckedRef.current === username) return;
+    announcementCheckedRef.current = username;
+    try {
+      if (!localStorage.getItem(`${NS}:seenChallengeAnnouncement:${username}`)) setShowChallengeAnnouncement(true);
+    } catch {
+      /* ignore */
+    }
+  }, [username, matches]);
+
+  const closeChallengeAnnouncement = () => {
+    setShowChallengeAnnouncement(false);
+    try {
+      localStorage.setItem(`${NS}:seenChallengeAnnouncement:${username}`, "true");
+    } catch {
+      /* ignore */
+    }
+  };
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 15000);
@@ -1593,6 +1615,36 @@ export default function App() {
       </div>
 
       {showPrizePopup && <PrizePopup onClose={() => setShowPrizePopup(false)} />}
+
+      {showChallengeAnnouncement && (
+        <div
+          onClick={closeChallengeAnnouncement}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 80 }}
+          className="flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Challenge 26-27 septembre"
+            style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }}
+            className="w-full max-w-sm rounded p-6 text-center"
+          >
+            <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber }} className="text-2xl font-bold mb-3">
+              🏆 Challenge 26-27 septembre
+            </div>
+            <p style={{ color: COLORS.paper }} className="text-sm mb-5">
+              12 matchs à pronostiquer ce week-end ! Termine dans le top 3 du classement de ce challenge pour remporter ton lot.
+            </p>
+            <button
+              onClick={closeChallengeAnnouncement}
+              style={{ background: COLORS.amber, color: COLORS.ink }}
+              className="w-full rounded py-2 text-sm font-semibold"
+            >
+              C'est parti !
+            </button>
+          </div>
+        </div>
+      )}
 
       {showLeaderboardModal && (
         <div
