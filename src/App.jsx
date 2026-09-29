@@ -9,6 +9,8 @@ const SHOP_BANNER_START = new Date("2026-09-01T00:00:00");
 const PRIZE_MATCH_DATE = new Date("2026-08-29T19:00:00");
 const PRIZE_BANNER_END = new Date(PRIZE_MATCH_DATE.getTime() + 48 * 60 * 60 * 1000);
 const PRIZE_POPUP_END = new Date("2026-09-27T18:00:00");
+const OCTOBRE_ROSE_START = new Date("2026-10-01T00:00:00");
+const OCTOBRE_ROSE_END = new Date("2026-11-01T00:00:00");
 const VAPID_PUBLIC_KEY = "BOpzZO99HQnSZLg0sB1lravRWGBr3-E9Ea-qiif05X2osj2zpv0NC0xtGy4nSD0RP6IQ0gSuaPYEJz2nYavQl8k";
 
 function urlBase64ToUint8Array(base64String) {
@@ -213,6 +215,10 @@ export default function App() {
   const [showPrizePopup, setShowPrizePopup] = useState(() => new Date() < PRIZE_POPUP_END);
   const [showChallengeAnnouncement, setShowChallengeAnnouncement] = useState(false);
   const announcementCheckedRef = useRef(null); // username pour lequel l'annonce a déjà été évaluée
+  const [showOctobreRose, setShowOctobreRose] = useState(() => {
+    const nowDate = new Date();
+    return nowDate >= OCTOBRE_ROSE_START && nowDate < OCTOBRE_ROSE_END;
+  });
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const nowDate = new Date();
     const currentKey = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, "0")}`;
@@ -1603,6 +1609,32 @@ export default function App() {
           </>
         )}
       </div>
+
+      {showOctobreRose && (
+        <div
+          onClick={() => setShowOctobreRose(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", zIndex: 80 }}
+          className="flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Octobre Rose"
+            style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }}
+            className="relative w-full max-w-sm rounded p-4"
+          >
+            <button
+              onClick={() => setShowOctobreRose(false)}
+              style={{ color: COLORS.paperDim }}
+              className="absolute top-2 right-2 p-1 z-10"
+              aria-label="Fermer"
+            >
+              <X size={18} />
+            </button>
+            <img src="/octobre-rose.png" alt="PLCHB mobilisé pour Octobre Rose" className="w-full rounded" />
+          </div>
+        </div>
+      )}
 
       {showPrizePopup && <PrizePopup onClose={() => setShowPrizePopup(false)} />}
 
