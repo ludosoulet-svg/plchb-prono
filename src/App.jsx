@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Trophy, Plus, Lock, Shield, Check, X, ChevronRight, Users, Eye, EyeOff, Pencil, LogOut, Download, Crown } from "lucide-react";
+import { Trophy, Plus, Lock, Shield, Check, X, ChevronRight, Users, Eye, EyeOff, Pencil, LogOut, Download, Crown, Send } from "lucide-react";
 import { supabase } from "./supabaseClient";
 
 const CLUB_LOGO = "/club-logo.png";
@@ -173,6 +173,26 @@ function monthKeyOf(iso) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
+// Heure seule (HH:mm), pour les messages du chat.
+function fmtTime(iso) {
+  try {
+    return new Date(iso).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  } catch {
+    return "";
+  }
+}
+
+// Les 200 derniers messages du chat, du plus ancien au plus récent.
+async function loadRecentMessages() {
+  const { data, error } = await supabase
+    .from("messages")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(200);
+  if (error) throw error;
+  return (data || []).reverse();
+}
+
 // Affiche une date "YYYY-MM-DD" (colonne date Supabase) au format JJ/MM/AAAA.
 function fmtDay(day) {
   const [y, m, d] = String(day).split("-");
@@ -269,6 +289,10 @@ export default function App() {
   const [userEmails, setUserEmails] = useState({}); // { [username]: email | null }
   const [confirmingResetFor, setConfirmingResetFor] = useState(null);
   const [seenMatchIds, setSeenMatchIds] = useState([]);
+  const [messages, setMessages] = useState([]); // [{ id, username, content, created_at }], du plus ancien au plus récent
+  const [newMessageInput, setNewMessageInput] = useState("");
+  const [lastSeenMessageMs, setLastSeenMessageMs] = useState(0); // horodatage du dernier message lu par ce licencié
+  const messagesListRef = useRef(null);
   const [bonusPoints, setBonusPoints] = useState({}); // { [username]: points } — points attribués manuellement par l'admin
   const [bonusNameInput, setBonusNameInput] = useState("");
   const [bonusPointsInput, setBonusPointsInput] = useState("");
@@ -341,6 +365,12 @@ export default function App() {
       setChallenges(data || []);
     } catch {
       setChallenges([]);
+    }
+
+    try {
+      setMessages(await loadRecentMessages());
+    } catch {
+      setMessages([]);
     }
 
     setLoading(false);
@@ -416,6 +446,11 @@ export default function App() {
       const { data, error } = await supabase.from("challenges").select("*").order("start_date", { ascending: false });
       if (error) throw error;
       setChallenges(data || []);
+    } catch {
+      /* ignore */
+    }
+    try {
+      setMessages(await loadRecentMessages());
     } catch {
       /* ignore */
     }
@@ -911,6 +946,85 @@ export default function App() {
     }
   }, [tab, matches, seenMatchIds]);
 
+  // Messages : horodatage du dernier message lu, mémorisé par licencié sur cet appareil.
+  useEffect(() => {
+    if (!username) return;
+    try {
+      setLastSeenMessageMs(Number(localStorage.getItem(`${NS}:lastSeenMessageMs:${username}`)) || 0);
+    } catch {
+      setLastSeenMessageMs(0);
+    }
+  }, [username]);
+
+  const unreadMessagesCount = messages.filter(
+    (m) => m.username !== username && new Date(m.created_at).getTime() > lastSeenMessageMs
+  ).length;
+
+  // Ouvrir l'onglet Messages (ou y recevoir un message) marque tout comme lu.
+  useEffect(() => {
+    if (tab !== "messages" || !username) return;
+    const latest = messages
+      .filter((m) => !String(m.id).startsWith("tmp-"))
+      .reduce((max, m) => Math.max(max, new Date(m.created_at).getTime()), 0);
+    if (latest > lastSeenMessageMs) {
+      setLastSeenMessageMs(latest);
+      try {
+        localStorage.setItem(`${NS}:lastSeenMessageMs:${username}`, String(latest));
+      } catch {
+        /* ignore */
+      }
+    }
+  }, [tab, messages, username, lastSeenMessageMs]);
+
+  // Défile vers le message le plus récent à l'ouverture de l'onglet et à chaque nouveau message.
+  useEffect(() => {
+    if (tab !== "messages" || !messagesListRef.current) return;
+    messagesListRef.current.scrollTop = messagesListRef.current.scrollHeight;
+  }, [tab, messages.length]);
+
+  // Le chat se réactualise plus vite que le reste de l'appli tant que l'onglet est ouvert.
+  useEffect(() => {
+    if (tab !== "messages") return;
+    const t = setInterval(async () => {
+      try {
+        setMessages(await loadRecentMessages());
+      } catch {
+        /* ignore */
+      }
+    }, 5000);
+    return () => clearInterval(t);
+  }, [tab]);
+
+  const sendMessage = async () => {
+    const content = newMessageInput.trim();
+    if (!content || !username) return;
+    const tempId = `tmp-${Date.now()}`;
+    setMessages((prev) => [...prev, { id: tempId, username, content, created_at: new Date().toISOString() }]);
+    setNewMessageInput("");
+    try {
+      const { data, error } = await supabase.from("messages").insert({ username, content }).select().single();
+      if (error) throw error;
+      setMessages((prev) => {
+        const withoutTemp = prev.filter((m) => m.id !== tempId);
+        return withoutTemp.some((m) => m.id === data.id) ? withoutTemp : [...withoutTemp, data];
+      });
+    } catch {
+      // L'envoi a échoué : on retire le message provisoire et on rend le texte à l'utilisateur.
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      setNewMessageInput((current) => current || content);
+    }
+  };
+
+  const removeMessage = async (id) => {
+    if (String(id).startsWith("tmp-")) return;
+    setMessages((prev) => prev.filter((m) => m.id !== id));
+    try {
+      await supabase.from("messages").delete().eq("id", id);
+    } catch {
+      /* ignore */
+    }
+  };
+
   const showShopBanner = new Date() >= SHOP_BANNER_START;
 
   if (loading) {
@@ -1081,26 +1195,40 @@ export default function App() {
       </div>
 
       {/* tabs */}
-      <div className="flex px-4 pt-3 gap-1">
-        {[
+      {(() => {
+        const tabs = [
           ["matches", "Matchs"],
           ["leaderboard", "Classement"],
+          ["messages", "Messages"],
           ...(showAdminTab ? [["admin", "Admin"]] : []),
-        ].map(([key, label]) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            style={{
-              color: tab === key ? COLORS.ink : COLORS.paperDim,
-              background: tab === key ? COLORS.amber : "transparent",
-              border: tab === key ? "none" : `1px solid ${COLORS.line}`,
-            }}
-            className="relative flex-1 rounded py-2 text-sm font-medium"
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+        ];
+        return (
+          <div className="grid px-4 pt-3 gap-1" style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}>
+            {tabs.map(([key, label]) => (
+              <button
+                key={key}
+                onClick={() => setTab(key)}
+                style={{
+                  color: tab === key ? COLORS.ink : COLORS.paperDim,
+                  background: tab === key ? COLORS.amber : "transparent",
+                  border: tab === key ? "none" : `1px solid ${COLORS.line}`,
+                }}
+                className="relative rounded py-2 text-xs sm:text-sm font-medium"
+              >
+                {label}
+                {key === "messages" && unreadMessagesCount > 0 && tab !== "messages" && (
+                  <span
+                    style={{ background: COLORS.red, color: COLORS.paper }}
+                    className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center"
+                  >
+                    {unreadMessagesCount}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+        );
+      })()}
 
       <div className={`p-4 space-y-4 ${showShopBanner ? "pb-40" : "pb-4"}`}>
         {tab === "matches" && (
@@ -1265,6 +1393,94 @@ export default function App() {
                   ))}
                 </select>
               ))}
+          </Section>
+        )}
+
+        {tab === "messages" && (
+          <Section title="Messages" titleColor={COLORS.amber}>
+            <div
+              ref={messagesListRef}
+              style={{
+                background: COLORS.ink2,
+                border: `1px solid ${COLORS.line}`,
+                height: "calc(100dvh - 380px)",
+                minHeight: 240,
+              }}
+              className="rounded p-3 overflow-y-auto space-y-2"
+            >
+              {messages.length === 0 && (
+                <p style={{ color: COLORS.paperDim }} className="text-sm text-center mt-6">
+                  Aucun message pour l'instant. Écris le premier !
+                </p>
+              )}
+              {messages.map((m) => {
+                const mine = m.username === username;
+                return (
+                  <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+                    <div
+                      style={{
+                        background: mine ? COLORS.line : COLORS.ink,
+                        border: `1px solid ${COLORS.line}`,
+                        opacity: String(m.id).startsWith("tmp-") ? 0.6 : 1,
+                      }}
+                      className="max-w-[85%] rounded px-3 py-2"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <span style={{ color: COLORS.amber }} className="text-xs font-bold">
+                          {m.username}
+                        </span>
+                        <span className="flex items-center gap-2">
+                          <span style={{ color: COLORS.paperDim }} className="text-[10px] tabular-nums">
+                            {fmtTime(m.created_at)}
+                          </span>
+                          {mine && !String(m.id).startsWith("tmp-") && (
+                            <button
+                              onClick={() => removeMessage(m.id)}
+                              style={{ color: COLORS.paperDim }}
+                              aria-label="Supprimer mon message"
+                            >
+                              <X size={11} />
+                            </button>
+                          )}
+                        </span>
+                      </div>
+                      <div style={{ color: COLORS.paper }} className="text-sm break-words whitespace-pre-wrap">
+                        {m.content}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                sendMessage();
+              }}
+              className="flex gap-2 mt-2"
+            >
+              <input
+                value={newMessageInput}
+                onChange={(e) => setNewMessageInput(e.target.value)}
+                maxLength={500}
+                placeholder="Écris un message…"
+                style={{ background: COLORS.ink2, color: COLORS.paper, border: `1px solid ${COLORS.line}` }}
+                className="flex-1 min-w-0 rounded px-3 py-2 text-sm outline-none"
+              />
+              <button
+                type="submit"
+                disabled={!newMessageInput.trim()}
+                style={{
+                  background: newMessageInput.trim() ? COLORS.amber : COLORS.line,
+                  color: newMessageInput.trim() ? COLORS.ink : COLORS.paperDim,
+                }}
+                className="rounded px-3 flex items-center justify-center"
+                aria-label="Envoyer le message"
+              >
+                <Send size={16} />
+              </button>
+            </form>
           </Section>
         )}
 
