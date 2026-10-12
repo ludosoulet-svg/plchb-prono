@@ -291,7 +291,7 @@ export default function App() {
   const [seenMatchIds, setSeenMatchIds] = useState([]);
   const [messages, setMessages] = useState([]); // [{ id, username, content, created_at }], du plus ancien au plus récent
   const [newMessageInput, setNewMessageInput] = useState("");
-  const [lastSeenMessageMs, setLastSeenMessageMs] = useState(0); // horodatage du dernier message lu par ce licencié
+  const [seenMessageIds, setSeenMessageIds] = useState([]); // ids des messages déjà vus par ce licencié
   const messagesListRef = useRef(null);
   const [bonusPoints, setBonusPoints] = useState({}); // { [username]: points } — points attribués manuellement par l'admin
   const [bonusNameInput, setBonusNameInput] = useState("");
@@ -946,35 +946,36 @@ export default function App() {
     }
   }, [tab, matches, seenMatchIds]);
 
-  // Messages : horodatage du dernier message lu, mémorisé par licencié sur cet appareil.
+  // Messages déjà vus, mémorisés par licencié sur cet appareil.
   useEffect(() => {
     if (!username) return;
     try {
-      setLastSeenMessageMs(Number(localStorage.getItem(`${NS}:lastSeenMessageMs:${username}`)) || 0);
+      const stored = JSON.parse(localStorage.getItem(`${NS}:seenMessageIds:${username}`) || "[]");
+      setSeenMessageIds(Array.isArray(stored) ? stored : []);
     } catch {
-      setLastSeenMessageMs(0);
+      setSeenMessageIds([]);
     }
   }, [username]);
 
-  const unreadMessagesCount = messages.filter(
-    (m) => m.username !== username && new Date(m.created_at).getTime() > lastSeenMessageMs
-  ).length;
+  // Les messages que j'ai écrits moi-même ne comptent pas comme "nouveaux".
+  const newMessagesCount = messages.filter((m) => m.username !== username && !seenMessageIds.includes(m.id)).length;
 
-  // Ouvrir l'onglet Messages (ou y recevoir un message) marque tout comme lu.
+  // Ouvrir l'onglet Messages (ou y recevoir un message) marque tout comme vu.
+  // On ne garde que les ids encore présents dans la liste chargée pour que la mémoire ne grossisse pas.
   useEffect(() => {
     if (tab !== "messages" || !username) return;
-    const latest = messages
-      .filter((m) => !String(m.id).startsWith("tmp-"))
-      .reduce((max, m) => Math.max(max, new Date(m.created_at).getTime()), 0);
-    if (latest > lastSeenMessageMs) {
-      setLastSeenMessageMs(latest);
-      try {
-        localStorage.setItem(`${NS}:lastSeenMessageMs:${username}`, String(latest));
-      } catch {
-        /* ignore */
-      }
+    const ids = messages.map((m) => m.id).filter((id) => !String(id).startsWith("tmp-"));
+    if (ids.length === 0) return;
+    const merged = Array.from(new Set([...seenMessageIds, ...ids])).filter((id) => ids.includes(id));
+    const unchanged = merged.length === seenMessageIds.length && merged.every((id) => seenMessageIds.includes(id));
+    if (unchanged) return;
+    setSeenMessageIds(merged);
+    try {
+      localStorage.setItem(`${NS}:seenMessageIds:${username}`, JSON.stringify(merged));
+    } catch {
+      /* ignore */
     }
-  }, [tab, messages, username, lastSeenMessageMs]);
+  }, [tab, messages, username, seenMessageIds]);
 
   // Défile vers le message le plus récent à l'ouverture de l'onglet et à chaque nouveau message.
   useEffect(() => {
@@ -1216,12 +1217,12 @@ export default function App() {
                 className="relative rounded py-2 text-xs sm:text-sm font-medium"
               >
                 {label}
-                {key === "messages" && unreadMessagesCount > 0 && tab !== "messages" && (
+                {key === "messages" && newMessagesCount > 0 && tab !== "messages" && (
                   <span
                     style={{ background: COLORS.red, color: COLORS.paper }}
                     className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full text-[9px] font-bold flex items-center justify-center"
                   >
-                    {unreadMessagesCount}
+                    {newMessagesCount}
                   </span>
                 )}
               </button>
