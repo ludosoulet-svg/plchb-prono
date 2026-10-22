@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import { Trophy, Plus, Lock, Shield, Check, X, ChevronRight, Users, Eye, EyeOff, Pencil, LogOut, Download, Crown, Send } from "lucide-react";
+import { Trophy, Plus, Lock, Shield, Check, X, ChevronRight, Users, Eye, EyeOff, Pencil, LogOut, Download, Crown, Send, Clock } from "lucide-react";
 import { supabase } from "./supabaseClient";
 
 const CLUB_LOGO = "/club-logo.png";
@@ -180,6 +180,20 @@ function fmtTime(iso) {
   } catch {
     return "";
   }
+}
+
+// Compte à rebours avant le coup d'envoi ; null une fois le match commencé.
+function getCountdown(targetDate, now) {
+  const diff = targetDate.getTime() - now.getTime();
+  if (diff <= 0) return null;
+  const totalMinutes = Math.floor(diff / 60000);
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+  if (days > 0) return `Il reste ${days}j ${hours}h`;
+  if (hours > 0) return `Il reste ${hours}h ${minutes}min`;
+  if (minutes > 0) return `Il reste ${minutes}min`;
+  return "Moins d'une minute !";
 }
 
 // Les 200 derniers messages du chat, du plus ancien au plus récent.
@@ -1292,6 +1306,7 @@ export default function App() {
                           key={m.id}
                           match={m}
                           locked
+                          now={now}
                           myPred={myPrediction(m.id)}
                           bettorsNames={Object.entries(predictions)
                             .filter(([key]) => key.startsWith(`${m.id}__`))
@@ -1323,6 +1338,7 @@ export default function App() {
                       key={m.id}
                       match={m}
                       locked={false}
+                      now={now}
                       myPred={myPrediction(m.id)}
                       bettorsNames={Object.entries(predictions)
                         .filter(([key]) => key.startsWith(`${m.id}__`))
@@ -2355,10 +2371,11 @@ function LicencieRow({ name, pin, email, isLast, confirming, onStartReset, onCan
   );
 }
 
-function MatchCard({ match, locked, myPred, bettorsNames, onSubmit }) {
+function MatchCard({ match, locked, now, myPred, bettorsNames, onSubmit }) {
   const [h, setH] = useState(myPred?.h ?? "");
   const [a, setA] = useState(myPred?.a ?? "");
   const bettorsCount = bettorsNames.length;
+  const countdown = !locked ? getCountdown(new Date(match.date), now) : null;
 
   useEffect(() => {
     if (myPred) {
@@ -2371,9 +2388,16 @@ function MatchCard({ match, locked, myPred, bettorsNames, onSubmit }) {
 
   return (
     <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-4">
-      <div className="flex items-center justify-between mb-2">
-        <div style={{ color: COLORS.paper }} className="text-xs">
-          {fmtDate(match.date)}
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <div style={{ color: COLORS.paper }} className="text-xs">
+            {fmtDate(match.date)}
+          </div>
+          {countdown && (
+            <div style={{ color: COLORS.amber }} className="text-xs mt-0.5 flex items-center gap-1">
+              <Clock size={11} /> {countdown}
+            </div>
+          )}
         </div>
         <CategoryBadge category={match.category} />
       </div>
