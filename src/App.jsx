@@ -11,6 +11,7 @@ const PRIZE_BANNER_END = new Date(PRIZE_MATCH_DATE.getTime() + 48 * 60 * 60 * 10
 const PRIZE_POPUP_END = new Date("2026-09-27T18:00:00");
 const OCTOBRE_ROSE_START = new Date("2026-10-01T00:00:00");
 const OCTOBRE_ROSE_END = new Date("2026-11-01T00:00:00");
+const SEASON_MIN_PLAYED = 50; // nombre minimum de matchs pronostiqués pour être classé sur la saison
 const VAPID_PUBLIC_KEY = "BOpzZO99HQnSZLg0sB1lravRWGBr3-E9Ea-qiif05X2osj2zpv0NC0xtGy4nSD0RP6IQ0gSuaPYEJz2nYavQl8k";
 
 function urlBase64ToUint8Array(base64String) {
@@ -906,10 +907,20 @@ export default function App() {
       byUser[user].points += bonus;
       byUser[user].bonus = bonus;
     });
-    return Object.values(byUser).sort((a, b) => b.points - a.points || b.exact - a.exact);
+    // Classement saison : ratio points/match. Il faut au moins SEASON_MIN_PLAYED matchs pronostiqués
+    // pour être classé ; les autres sont listés à la suite, sans rang.
+    const rows = Object.values(byUser).map((row) => ({
+      ...row,
+      ratio: row.played > 0 ? row.points / row.played : 0,
+      eligible: row.played >= SEASON_MIN_PLAYED,
+    }));
+    const byRatio = (a, b) => b.ratio - a.ratio || b.points - a.points || b.exact - a.exact;
+    return [...rows.filter((r) => r.eligible).sort(byRatio), ...rows.filter((r) => !r.eligible).sort(byRatio)];
   }, [matches, buildLeaderboard, bonusPoints]);
 
-  const myRank = seasonLeaderboard.findIndex((row) => row.user === username) + 1;
+  // Seuls les licenciés classés (au moins SEASON_MIN_PLAYED matchs) ont un rang.
+  const myRankIndex = seasonLeaderboard.findIndex((row) => row.user === username);
+  const myRank = myRankIndex >= 0 && seasonLeaderboard[myRankIndex].eligible ? myRankIndex + 1 : 0;
 
   // Combine le registre des inscriptions avec les noms trouvés dans les pronostics
   // (utile pour les licenciés qui s'étaient déjà connectés avant la mise en place du registre).
@@ -1973,7 +1984,7 @@ export default function App() {
                           justifyContent: "center",
                         }}
                       >
-                        {i === 0 && lbScope === "season" && (
+                        {i === 0 && lbScope === "season" && row.eligible && (
                           <Crown
                             size={16}
                             color="#B8860B"
@@ -1981,10 +1992,10 @@ export default function App() {
                           />
                         )}
                         <span
-                          style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink }}
+                          style={{ fontFamily: "Oswald, sans-serif", color: lbScope === "season" && !row.eligible ? "#9CA3AF" : COLORS.ink }}
                           className="text-lg font-semibold"
                         >
-                          {i + 1}
+                          {lbScope === "season" && !row.eligible ? "—" : i + 1}
                         </span>
                       </div>
                       <div className="flex-1">
@@ -1995,20 +2006,41 @@ export default function App() {
                           {row.played} pronostic{row.played > 1 ? "s" : ""} · {row.exact} exact{row.exact > 1 ? "s" : ""}
                           {row.bonus ? ` · ${row.bonus >= 0 ? `+${row.bonus}` : row.bonus} bonus` : ""}
                         </div>
-                      </div>
-                      <div style={{ width: 90, whiteSpace: "nowrap" }} className="shrink-0">
-                        <span
-                          style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, width: 50 }}
-                          className="text-lg font-semibold tabular-nums text-right inline-block"
-                        >
-                          {row.points}
-                        </span>
-                        {lbScope === "season" && i > 0 && leaderboard[0].points - row.points > 0 && (
-                          <span style={{ color: "#6B7280", fontSize: "0.7em" }} className="ml-1">
-                            (-{leaderboard[0].points - row.points})
-                          </span>
+                        {lbScope === "season" && !row.eligible && (
+                          <div style={{ color: "#C2410C" }} className="text-xs">
+                            Il manque {SEASON_MIN_PLAYED - row.played} match{SEASON_MIN_PLAYED - row.played > 1 ? "s" : ""} avant d'être classé
+                          </div>
                         )}
                       </div>
+                      {lbScope === "season" ? (
+                        <div style={{ minWidth: 90, whiteSpace: "nowrap" }} className="shrink-0 text-right">
+                          <div>
+                            <span
+                              style={{ fontFamily: "Oswald, sans-serif", color: row.eligible ? COLORS.ink : "#6B7280" }}
+                              className="text-lg font-semibold tabular-nums"
+                            >
+                              {row.ratio.toFixed(2)}
+                            </span>
+                            <span style={{ color: "#6B7280", fontSize: "0.7em" }} className="ml-1">
+                              pts/match
+                            </span>
+                          </div>
+                          {row.eligible && i > 0 && (leaderboard[0].ratio - row.ratio).toFixed(2) !== "0.00" && (
+                            <div style={{ color: "#6B7280", fontSize: "0.7em" }}>
+                              (-{(leaderboard[0].ratio - row.ratio).toFixed(2)})
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div style={{ width: 90, whiteSpace: "nowrap" }} className="shrink-0">
+                          <span
+                            style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, width: 50 }}
+                            className="text-lg font-semibold tabular-nums text-right inline-block"
+                          >
+                            {row.points}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
