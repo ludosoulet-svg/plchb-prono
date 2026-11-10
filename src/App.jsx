@@ -2025,11 +2025,6 @@ export default function App() {
                               pts/match
                             </span>
                           </div>
-                          {row.eligible && i > 0 && (leaderboard[0].ratio - row.ratio).toFixed(2) !== "0.00" && (
-                            <div style={{ color: "#6B7280", fontSize: "0.7em" }}>
-                              (-{(leaderboard[0].ratio - row.ratio).toFixed(2)})
-                            </div>
-                          )}
                         </div>
                       ) : (
                         <div style={{ width: 90, whiteSpace: "nowrap" }} className="shrink-0">
