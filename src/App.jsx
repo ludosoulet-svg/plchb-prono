@@ -1933,6 +1933,17 @@ export default function App() {
               <p style={{ color: "#6B7280" }} className="text-xs mt-3">
                 Barème : score exact = 10 pts · bon vainqueur et bonne différence de buts = 5 pts · bon vainqueur = 2 pts · pronostic faux = 0 pt.
               </p>
+              <div
+                style={{ background: COLORS.ink, border: `1px solid ${COLORS.line}` }}
+                className="no-print rounded p-3 mt-3"
+              >
+                <div style={{ color: COLORS.paper }} className="text-xs font-semibold mb-1">
+                  Comment est calculé ce classement ?
+                </div>
+                <p style={{ color: COLORS.paperDim }} className="text-xs leading-relaxed">
+                  Le classement général se base sur le RATIO entre tes points gagnés et ton nombre total de pronostics faits (points ÷ matchs pronostiqués), pas sur le total de points brut. Il faut avoir pronostiqué au moins 50 matchs pour apparaître dans le classement principal. En dessous de 50 matchs, tu apparais en bas de liste avec ton ratio actuel, et le nombre de pronostics qu'il te manque pour être classé.
+                </p>
+              </div>
             </div>
           </div>
         </div>
