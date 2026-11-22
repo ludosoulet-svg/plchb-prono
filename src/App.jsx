@@ -158,26 +158,6 @@ function fmtDate(iso) {
   }
 }
 
-// Mois de la saison 2026-2027, de septembre à juin, pour le classement mensuel.
-const SEASON_MONTHS = [
-  { key: "2026-09", label: "Septembre 2026" },
-  { key: "2026-10", label: "Octobre 2026" },
-  { key: "2026-11", label: "Novembre 2026" },
-  { key: "2026-12", label: "Décembre 2026" },
-  { key: "2027-01", label: "Janvier 2027" },
-  { key: "2027-02", label: "Février 2027" },
-  { key: "2027-03", label: "Mars 2027" },
-  { key: "2027-04", label: "Avril 2027" },
-  { key: "2027-05", label: "Mai 2027" },
-  { key: "2027-06", label: "Juin 2027" },
-];
-
-// Groupe les matchs par mois calendaire (heure locale) pour le classement mensuel.
-function monthKeyOf(iso) {
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-}
-
 // Heure seule (HH:mm), pour les messages du chat.
 function fmtTime(iso) {
   try {
@@ -241,9 +221,7 @@ export default function App() {
   const [adminInput, setAdminInput] = useState("");
   const [adminError, setAdminError] = useState(false);
   const [showAdminInput, setShowAdminInput] = useState(false);
-  const [lbScope, setLbScope] = useState("month"); // 'month' | 'challenge' | 'season'
   const [challenges, setChallenges] = useState([]); // [{ id, name, start_date, end_date }], du plus récent au plus ancien
-  const [selectedChallenge, setSelectedChallenge] = useState("");
   const [challengeNameInput, setChallengeNameInput] = useState("");
   const [challengeStartInput, setChallengeStartInput] = useState("");
   const [challengeEndInput, setChallengeEndInput] = useState("");
@@ -257,11 +235,6 @@ export default function App() {
   const [showOctobreRose, setShowOctobreRose] = useState(() => {
     const nowDate = new Date();
     return nowDate >= OCTOBRE_ROSE_START && nowDate < OCTOBRE_ROSE_END;
-  });
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const nowDate = new Date();
-    const currentKey = `${nowDate.getFullYear()}-${String(nowDate.getMonth() + 1).padStart(2, "0")}`;
-    return SEASON_MONTHS.some((m) => m.key === currentKey) ? currentKey : SEASON_MONTHS[0].key;
   });
   const [matchFilter, setMatchFilter] = useState("toBet"); // 'toBet' | 'predicted' | 'closed'
   const [now, setNow] = useState(() => new Date());
@@ -937,27 +910,8 @@ export default function App() {
     return Array.from(names).sort();
   }, [registeredUsers, predictions]);
 
-  const monthLeaderboard = useMemo(() => {
-    return buildLeaderboard(matches.filter((m) => monthKeyOf(m.date) === selectedMonth));
-  }, [matches, selectedMonth, buildLeaderboard]);
-
-  // Challenge sélectionné : par défaut le plus récent (la liste est triée par date de début décroissante).
-  const activeChallengeId = challenges.some((c) => c.id === selectedChallenge) ? selectedChallenge : challenges[0]?.id ?? "";
-
-  const challengeLeaderboard = useMemo(() => {
-    const challenge = challenges.find((c) => c.id === activeChallengeId);
-    if (!challenge) return [];
-    const start = new Date(`${challenge.start_date}T00:00:00`);
-    const end = new Date(`${challenge.end_date}T23:59:59`);
-    return buildLeaderboard(
-      matches.filter((m) => {
-        const d = new Date(m.date);
-        return d >= start && d <= end;
-      })
-    );
-  }, [matches, challenges, activeChallengeId, buildLeaderboard]);
-
-  const leaderboard = lbScope === "season" ? seasonLeaderboard : lbScope === "challenge" ? challengeLeaderboard : monthLeaderboard;
+  // Un seul classement : celui de la saison.
+  const leaderboard = seasonLeaderboard;
 
   const upcoming = matches.filter((m) => m.status === "upcoming");
   const finished = matches.filter((m) => m.status === "finished").reverse();
@@ -1372,63 +1326,13 @@ export default function App() {
 
         {tab === "leaderboard" && (
           <Section title="Classement" titleColor={COLORS.amber}>
-            <div className="flex gap-1 mb-1">
-              {[
-                ["month", "Par mois"],
-                ["challenge", "Challenge"],
-                ["season", "Saison"],
-              ].map(([key, label]) => (
-                <button
-                  key={key}
-                  onClick={() => {
-                    setLbScope(key);
-                    setShowLeaderboardModal(true);
-                  }}
-                  style={{
-                    color: lbScope === key ? COLORS.ink : COLORS.paperDim,
-                    background: lbScope === key ? COLORS.teal : "transparent",
-                    border: lbScope === key ? "none" : `1px solid ${COLORS.line}`,
-                    boxShadow: lbScope === key ? "0 2px 6px rgba(61,139,219,0.4)" : "none",
-                  }}
-                  className="flex-1 rounded py-1.5 text-xs font-medium"
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {lbScope === "month" && (
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(e.target.value)}
-                style={{ background: COLORS.ink2, color: COLORS.paper, border: `1px solid ${COLORS.line}` }}
-                className="w-full rounded px-3 py-2 text-sm outline-none mb-1"
-              >
-                {SEASON_MONTHS.map((m) => (
-                  <option key={m.key} value={m.key}>
-                    {m.label}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            {lbScope === "challenge" &&
-              (challenges.length === 0 ? (
-                <EmptyState text="Aucun challenge disponible pour l'instant." />
-              ) : (
-                <select
-                  value={activeChallengeId}
-                  onChange={(e) => setSelectedChallenge(e.target.value)}
-                  style={{ background: COLORS.ink2, color: COLORS.paper, border: `1px solid ${COLORS.line}` }}
-                  className="w-full rounded px-3 py-2 text-sm outline-none mb-1"
-                >
-                  {challenges.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              ))}
+            <button
+              onClick={() => setShowLeaderboardModal(true)}
+              style={{ color: COLORS.ink, background: COLORS.teal, boxShadow: "0 2px 6px rgba(61,139,219,0.4)" }}
+              className="w-full rounded py-2 text-sm font-medium active:scale-95"
+            >
+              Voir le classement général
+            </button>
           </Section>
         )}
 
@@ -1934,7 +1838,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between mb-3">
               <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink }} className="text-2xl font-semibold">
-                {lbScope === "season" ? "Classement général" : lbScope === "challenge" ? "Classement du challenge" : "Classement du mois"}
+                Classement général
               </div>
               <button
                 onClick={() => setShowLeaderboardModal(false)}
@@ -1945,33 +1849,21 @@ export default function App() {
               </button>
             </div>
 
-            {lbScope === "season" && (
-              <button
-                onClick={() => window.print()}
-                style={{ color: "#6B7280", border: "1px solid #E2E2E2" }}
-                className="no-print w-full flex items-center justify-center gap-1.5 text-xs py-1.5 rounded mb-1"
-              >
-                <Download size={13} />
-                Télécharger le classement général en PDF
-              </button>
-            )}
+            <button
+              onClick={() => window.print()}
+              style={{ color: "#6B7280", border: "1px solid #E2E2E2" }}
+              className="no-print w-full flex items-center justify-center gap-1.5 text-xs py-1.5 rounded mb-1"
+            >
+              <Download size={13} />
+              Télécharger le classement général en PDF
+            </button>
 
-            <div className={lbScope === "season" ? "print-leaderboard" : ""}>
-              {lbScope === "season" && (
-                <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink }} className="text-base font-semibold mb-2">
-                  Classement général — PLCHB Pronostic
-                </div>
-              )}
+            <div className="print-leaderboard">
+              <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink }} className="text-base font-semibold mb-2">
+                Classement général — PLCHB Pronostic
+              </div>
               {leaderboard.length === 0 ? (
-                <EmptyState
-                  text={
-                    lbScope === "month"
-                      ? "Aucun résultat saisi pour ce mois pour l'instant."
-                      : lbScope === "challenge"
-                        ? "Aucun résultat saisi pour ce challenge pour l'instant."
-                        : "Le classement apparaîtra dès qu'un match sera terminé et pronostiqué."
-                  }
-                />
+                <EmptyState text="Le classement apparaîtra dès qu'un match sera terminé et pronostiqué." />
               ) : (
                 <div style={{ background: "#FFFFFF", border: "1px solid #E2E2E2" }} className="rounded overflow-hidden">
                   {leaderboard.map((row, i) => (
@@ -1993,7 +1885,7 @@ export default function App() {
                           justifyContent: "center",
                         }}
                       >
-                        {i === 0 && lbScope === "season" && row.eligible && (
+                        {i === 0 && row.eligible && (
                           <Crown
                             size={16}
                             color="#B8860B"
@@ -2001,10 +1893,10 @@ export default function App() {
                           />
                         )}
                         <span
-                          style={{ fontFamily: "Oswald, sans-serif", color: lbScope === "season" && !row.eligible ? "#9CA3AF" : COLORS.ink }}
+                          style={{ fontFamily: "Oswald, sans-serif", color: !row.eligible ? "#9CA3AF" : COLORS.ink }}
                           className="text-lg font-semibold"
                         >
-                          {lbScope === "season" && !row.eligible ? "—" : i + 1}
+                          {!row.eligible ? "—" : i + 1}
                         </span>
                       </div>
                       <div className="flex-1">
@@ -2015,36 +1907,25 @@ export default function App() {
                           {row.played} pronostic{row.played > 1 ? "s" : ""} · {row.exact} exact{row.exact > 1 ? "s" : ""}
                           {row.bonus ? ` · ${row.bonus >= 0 ? `+${row.bonus}` : row.bonus} bonus` : ""}
                         </div>
-                        {lbScope === "season" && !row.eligible && (
+                        {!row.eligible && (
                           <div style={{ color: "#C2410C" }} className="text-xs">
                             Il manque {SEASON_MIN_PLAYED - row.played} match{SEASON_MIN_PLAYED - row.played > 1 ? "s" : ""} avant d'être classé
                           </div>
                         )}
                       </div>
-                      {lbScope === "season" ? (
-                        <div style={{ minWidth: 90, whiteSpace: "nowrap" }} className="shrink-0 text-right">
-                          <div>
-                            <span
-                              style={{ fontFamily: "Oswald, sans-serif", color: row.eligible ? COLORS.ink : "#6B7280" }}
-                              className="text-lg font-semibold tabular-nums"
-                            >
-                              {row.ratio.toFixed(2)}
-                            </span>
-                            <span style={{ color: "#6B7280", fontSize: "0.7em" }} className="ml-1">
-                              pts/match
-                            </span>
-                          </div>
-                        </div>
-                      ) : (
-                        <div style={{ width: 90, whiteSpace: "nowrap" }} className="shrink-0">
+                      <div style={{ minWidth: 90, whiteSpace: "nowrap" }} className="shrink-0 text-right">
+                        <div>
                           <span
-                            style={{ fontFamily: "Oswald, sans-serif", color: COLORS.ink, width: 50 }}
-                            className="text-lg font-semibold tabular-nums text-right inline-block"
+                            style={{ fontFamily: "Oswald, sans-serif", color: row.eligible ? COLORS.ink : "#6B7280" }}
+                            className="text-lg font-semibold tabular-nums"
                           >
-                            {row.points}
+                            {row.ratio.toFixed(2)}
+                          </span>
+                          <span style={{ color: "#6B7280", fontSize: "0.7em" }} className="ml-1">
+                            pts/match
                           </span>
                         </div>
-                      )}
+                      </div>
                     </div>
                   ))}
                 </div>
