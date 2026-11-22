@@ -9,3 +9,19 @@ html, body, #root {
 body {
   margin: 0;
 }
+
+/* Transitions douces sur les éléments interactifs et les cartes */
+button,
+input,
+select,
+textarea {
+  transition: all 0.2s ease;
+}
+
+/* Focus plus visible sur les champs de saisie */
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+  border-color: #FFD400 !important;
+  box-shadow: 0 0 0 2px rgba(255, 212, 0, 0.3);
+}

@@ -99,6 +99,10 @@ const COLORS = {
   line: "#1E4E80",
 };
 
+const BG_GRADIENT = `linear-gradient(180deg, ${COLORS.ink} 0%, #0d2d54 50%, ${COLORS.ink} 100%)`;
+const CARD_SHADOW = "0 4px 16px rgba(0,0,0,0.25)";
+const AMBER_SHADOW = "0 2px 8px rgba(255,212,0,0.25)";
+
 const ADMIN_PASS = "coach2026";
 const NS = "phc"; // pronostics hand club — v2 (clés localStorage pour les préférences personnelles)
 
@@ -1055,7 +1059,7 @@ export default function App() {
 
   if (loading) {
     return (
-      <div style={{ background: COLORS.ink, minHeight: "100vh" }} className="flex items-center justify-center">
+      <div style={{ background: BG_GRADIENT, minHeight: "100vh" }} className="flex items-center justify-center">
         <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
         <style>{FONTS}</style>
         <div style={{ color: COLORS.paperDim, fontFamily: "Inter, sans-serif" }}>Chargement…</div>
@@ -1067,7 +1071,7 @@ export default function App() {
     return (
       <div
         style={{
-          background: COLORS.ink,
+          background: BG_GRADIENT,
           height: `calc(100dvh - ${showShopBanner ? 136 : 82}px)`,
           overflowY: "auto",
           marginTop: 57,
@@ -1079,7 +1083,7 @@ export default function App() {
         <HandExpertBanner />
         <div style={{ position: "fixed", top: 53, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
         <style>{FONTS}</style>
-        <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="w-full max-w-sm rounded p-6">
+        <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}`, boxShadow: CARD_SHADOW }} className="w-full max-w-sm rounded p-6">
           <img src={NEW_CLUB_LOGO} alt="PLCHB Pronostic" className="w-full max-w-[280px] mx-auto mb-4 object-contain" />
 
           {loginStep === "name" && (
@@ -1159,9 +1163,10 @@ export default function App() {
             style={{
               background: COLORS.amber,
               color: COLORS.ink,
+              boxShadow: AMBER_SHADOW,
               opacity: checkingUser || (loginStep === "name" && isNewUser && !isValidEmail) ? 0.6 : 1,
             }}
-            className="w-full rounded py-2 font-semibold"
+            className="w-full rounded py-2 font-semibold active:scale-95"
           >
             {checkingUser ? "…" : "Continuer"}
           </button>
@@ -1192,7 +1197,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ background: COLORS.ink, minHeight: "100vh", fontFamily: "Inter, sans-serif", paddingTop: 57 }}>
+    <div style={{ background: BG_GRADIENT, minHeight: "100vh", fontFamily: "Inter, sans-serif", paddingTop: 57 }}>
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
       <HandExpertBanner />
       <div style={{ position: "fixed", top: 53, left: 0, right: 0, height: 4, background: COLORS.amber, zIndex: 50 }} />
@@ -1238,6 +1243,7 @@ export default function App() {
                   color: tab === key ? COLORS.ink : COLORS.paperDim,
                   background: tab === key ? COLORS.amber : "transparent",
                   border: tab === key ? "none" : `1px solid ${COLORS.line}`,
+                  boxShadow: tab === key ? "0 2px 6px rgba(255,212,0,0.3)" : "none",
                 }}
                 className="relative rounded py-2 text-xs sm:text-sm font-medium"
               >
@@ -1275,6 +1281,7 @@ export default function App() {
                     color: matchFilter === key ? COLORS.ink : COLORS.paperDim,
                     background: matchFilter === key ? COLORS.teal : "transparent",
                     border: matchFilter === key ? "none" : `1px solid ${COLORS.line}`,
+                    boxShadow: matchFilter === key ? "0 2px 6px rgba(61,139,219,0.4)" : "none",
                   }}
                   className="relative rounded py-1.5 px-1 text-[11px] font-medium leading-tight"
                 >
@@ -1381,6 +1388,7 @@ export default function App() {
                     color: lbScope === key ? COLORS.ink : COLORS.paperDim,
                     background: lbScope === key ? COLORS.teal : "transparent",
                     border: lbScope === key ? "none" : `1px solid ${COLORS.line}`,
+                    boxShadow: lbScope === key ? "0 2px 6px rgba(61,139,219,0.4)" : "none",
                   }}
                   className="flex-1 rounded py-1.5 text-xs font-medium"
                 >
@@ -1502,8 +1510,9 @@ export default function App() {
                 style={{
                   background: newMessageInput.trim() ? COLORS.amber : COLORS.line,
                   color: newMessageInput.trim() ? COLORS.ink : COLORS.paperDim,
+                  boxShadow: newMessageInput.trim() ? AMBER_SHADOW : "none",
                 }}
-                className="rounded px-3 flex items-center justify-center"
+                className="rounded px-3 flex items-center justify-center active:scale-95"
                 aria-label="Envoyer le message"
               >
                 <Send size={16} />
@@ -1513,7 +1522,7 @@ export default function App() {
         )}
 
         {tab === "admin" && !adminOn && (
-          <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-5">
+          <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}`, boxShadow: CARD_SHADOW }} className="rounded p-5">
             <div className="flex items-center gap-2 mb-3">
               <Shield size={16} color={COLORS.amber} />
               <div style={{ color: COLORS.paper }} className="font-medium text-sm">
@@ -1558,8 +1567,8 @@ export default function App() {
                 if (adminInput === ADMIN_PASS) setAdminOn(true);
                 else setAdminError(true);
               }}
-              style={{ background: COLORS.amber, color: COLORS.ink }}
-              className="w-full rounded py-2 font-semibold text-sm"
+              style={{ background: COLORS.amber, color: COLORS.ink, boxShadow: AMBER_SHADOW }}
+              className="active:scale-95 w-full rounded py-2 font-semibold text-sm"
             >
               Déverrouiller
             </button>
@@ -1572,7 +1581,7 @@ export default function App() {
         {tab === "admin" && adminOn && (
           <>
             <Section title="Licenciés inscrits" titleColor={COLORS.amber}>
-              <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-4">
+              <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}`, boxShadow: CARD_SHADOW }} className="rounded p-4">
                 <div className="flex items-center gap-2 mb-2">
                   <Users size={14} color={COLORS.amber} />
                   <span style={{ color: COLORS.paper }} className="text-sm font-medium">
@@ -1609,7 +1618,7 @@ export default function App() {
             </Section>
 
             <Section title="Attribuer des points (classement général)" titleColor={COLORS.amber}>
-              <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-4 space-y-2">
+              <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}`, boxShadow: CARD_SHADOW }} className="rounded p-4 space-y-2">
                 <div className="flex gap-2">
                   <input
                     value={bonusNameInput}
@@ -1635,8 +1644,8 @@ export default function App() {
                     setBonusNameInput("");
                     setBonusPointsInput("");
                   }}
-                  style={{ background: COLORS.amber, color: COLORS.ink }}
-                  className="w-full rounded py-2 text-sm font-semibold flex items-center justify-center gap-1"
+                  style={{ background: COLORS.amber, color: COLORS.ink, boxShadow: AMBER_SHADOW }}
+                  className="active:scale-95 w-full rounded py-2 text-sm font-semibold flex items-center justify-center gap-1"
                 >
                   <Plus size={14} /> Attribuer les points
                 </button>
@@ -1646,7 +1655,7 @@ export default function App() {
               </div>
 
               {Object.keys(bonusPoints).length > 0 && (
-                <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded overflow-hidden mt-2">
+                <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}`, boxShadow: CARD_SHADOW }} className="rounded overflow-hidden mt-2">
                   {Object.entries(bonusPoints).map(([name, pts], i, arr) => (
                     <div
                       key={name}
@@ -1671,7 +1680,7 @@ export default function App() {
             </Section>
 
             <Section title="Challenges" titleColor={COLORS.amber}>
-              <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-4 space-y-2">
+              <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}`, boxShadow: CARD_SHADOW }} className="rounded p-4 space-y-2">
                 <input
                   value={challengeNameInput}
                   onChange={(e) => setChallengeNameInput(e.target.value)}
@@ -1708,15 +1717,15 @@ export default function App() {
                 )}
                 <button
                   onClick={addChallenge}
-                  style={{ background: COLORS.teal, color: COLORS.paper }}
-                  className="w-full rounded py-2 text-sm font-semibold flex items-center justify-center gap-1"
+                  style={{ background: COLORS.teal, color: COLORS.paper, boxShadow: "0 2px 8px rgba(61,139,219,0.3)" }}
+                  className="w-full rounded py-2 text-sm font-semibold flex items-center justify-center gap-1 active:scale-95"
                 >
                   <Plus size={14} /> Ajouter le challenge
                 </button>
               </div>
 
               {challenges.length > 0 && (
-                <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded overflow-hidden mt-2">
+                <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}`, boxShadow: CARD_SHADOW }} className="rounded overflow-hidden mt-2">
                   {challenges.map((c, i) => (
                     <div
                       key={c.id}
@@ -1770,7 +1779,7 @@ export default function App() {
             </Section>
 
             <Section title="Ajouter un match" titleColor={COLORS.amber}>
-              <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-4 space-y-2">
+              <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}`, boxShadow: CARD_SHADOW }} className="rounded p-4 space-y-2">
                 <div className="flex gap-2">
                   <input
                     value={newHome}
@@ -1813,8 +1822,8 @@ export default function App() {
                 )}
                 <button
                   onClick={addMatch}
-                  style={{ background: COLORS.teal, color: COLORS.paper }}
-                  className="w-full rounded py-2 text-sm font-semibold flex items-center justify-center gap-1"
+                  style={{ background: COLORS.teal, color: COLORS.paper, boxShadow: "0 2px 8px rgba(61,139,219,0.3)" }}
+                  className="w-full rounded py-2 text-sm font-semibold flex items-center justify-center gap-1 active:scale-95"
                 >
                   <Plus size={14} /> Ajouter le match
                 </button>
@@ -1833,7 +1842,7 @@ export default function App() {
               {finished.map((m) => (
                 <div
                   key={m.id}
-                  style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }}
+                  style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}`, boxShadow: CARD_SHADOW }}
                   className="rounded p-3 flex items-center justify-between mb-2"
                 >
                   <div style={{ color: COLORS.paper }} className="text-sm">
@@ -1864,7 +1873,7 @@ export default function App() {
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-label="Octobre Rose"
-            style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }}
+            style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}`, boxShadow: CARD_SHADOW }}
             className="relative w-full max-w-sm rounded p-4"
           >
             <button
@@ -1892,7 +1901,7 @@ export default function App() {
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-label="Challenge 26-27 septembre"
-            style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }}
+            style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}`, boxShadow: CARD_SHADOW }}
             className="w-full max-w-sm rounded p-6 text-center"
           >
             <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber }} className="text-2xl font-bold mb-3">
@@ -1903,8 +1912,8 @@ export default function App() {
             </p>
             <button
               onClick={closeChallengeAnnouncement}
-              style={{ background: COLORS.amber, color: COLORS.ink }}
-              className="w-full rounded py-2 text-sm font-semibold"
+              style={{ background: COLORS.amber, color: COLORS.ink, boxShadow: AMBER_SHADOW }}
+              className="active:scale-95 w-full rounded py-2 text-sm font-semibold"
             >
               C'est parti !
             </button>
@@ -1920,7 +1929,7 @@ export default function App() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ background: COLORS.paper, border: "1px solid #E2E2E2" }}
+            style={{ background: COLORS.paper, border: "1px solid #E2E2E2", boxShadow: "0 8px 32px rgba(0,0,0,0.3)" }}
             className="w-[95vw] max-w-3xl rounded p-6 max-h-[90vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-3">
@@ -2103,15 +2112,15 @@ function NotifBanner({ username }) {
   };
 
   return (
-    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-3 flex items-center justify-between gap-3">
+    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}`, boxShadow: CARD_SHADOW }} className="rounded p-3 flex items-center justify-between gap-3">
       <div style={{ color: COLORS.paper }} className="text-xs">
         Active les alertes pour être prévenu dès qu'un nouveau match est ajouté.
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={handleEnable}
-          style={{ background: COLORS.amber, color: COLORS.ink }}
-          className="text-xs font-semibold px-3 py-1.5 rounded"
+          style={{ background: COLORS.amber, color: COLORS.ink, boxShadow: AMBER_SHADOW }}
+          className="active:scale-95 text-xs font-semibold px-3 py-1.5 rounded"
         >
           Activer
         </button>
@@ -2243,8 +2252,8 @@ function PrizePopup({ onClose }) {
 
         <button
           onClick={onClose}
-          style={{ background: COLORS.amber, color: COLORS.ink }}
-          className="w-full rounded py-2 mt-4 text-sm font-semibold"
+          style={{ background: COLORS.amber, color: COLORS.ink, boxShadow: AMBER_SHADOW }}
+          className="active:scale-95 w-full rounded py-2 mt-4 text-sm font-semibold"
         >
           C'est parti !
         </button>
@@ -2414,7 +2423,7 @@ function MatchCard({ match, locked, now, myPred, bettorsNames, onSubmit }) {
   const isSaved = myPred && h !== "" && a !== "" && Number(h) === myPred.h && Number(a) === myPred.a;
 
   return (
-    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-4">
+    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}`, boxShadow: CARD_SHADOW }} className="rounded p-4 transition-all duration-200 sm:hover:-translate-y-0.5">
       <div className="flex items-start justify-between mb-2">
         <div>
           <div style={{ color: COLORS.paper }} className="text-xs">
@@ -2456,8 +2465,9 @@ function MatchCard({ match, locked, now, myPred, bettorsNames, onSubmit }) {
             style={{
               background: h === "" || a === "" ? COLORS.line : isSaved ? COLORS.green : COLORS.amber,
               color: h === "" || a === "" ? COLORS.paperDim : isSaved ? COLORS.paper : COLORS.ink,
+              boxShadow: h === "" || a === "" ? "none" : isSaved ? "0 2px 8px rgba(51,165,84,0.3)" : AMBER_SHADOW,
             }}
-            className="rounded px-3 py-1.5 text-xs font-semibold flex items-center gap-1"
+            className="rounded px-3 py-1.5 text-xs font-semibold flex items-center gap-1 active:scale-95"
           >
             <Check size={13} /> {isSaved ? "Validé" : "Valider"}
           </button>
@@ -2518,6 +2528,7 @@ function ScoreInput({ value, onChange, disabled }) {
         color: COLORS.paper,
         border: `1px solid ${COLORS.amber}`,
         fontFamily: "Oswald, sans-serif",
+        letterSpacing: "-0.01em",
         opacity: disabled ? 0.5 : 1,
         textAlign: "center",
       }}
@@ -2540,7 +2551,7 @@ function FinishedCard({ match, predictions, username }) {
     .sort((a, b) => b.pts - a.pts);
 
   return (
-    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-4">
+    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}`, boxShadow: CARD_SHADOW }} className="rounded p-4 transition-all duration-200 sm:hover:-translate-y-0.5">
       <div className="flex items-center justify-between mb-2">
         <div style={{ color: COLORS.paper }} className="text-xs">
           {fmtDate(match.date)}
@@ -2551,7 +2562,7 @@ function FinishedCard({ match, predictions, username }) {
         <div style={{ color: COLORS.paper }} className="flex-1 text-sm font-medium">
           {match.home}
         </div>
-        <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber }} className="text-2xl font-semibold tabular-nums">
+        <div style={{ fontFamily: "Oswald, sans-serif", color: COLORS.amber, letterSpacing: "-0.01em" }} className="text-2xl font-semibold tabular-nums">
           {match.scoreH} - {match.scoreA}
         </div>
         <div style={{ color: COLORS.paper }} className="flex-1 text-sm font-medium text-right">
@@ -2655,8 +2666,8 @@ function AdminMatchRow({ match, onResult, onRemove, onEdit }) {
           </button>
           <button
             onClick={saveEdit}
-            style={{ background: COLORS.amber, color: COLORS.ink }}
-            className="flex-1 rounded py-1.5 text-xs font-semibold flex items-center justify-center gap-1"
+            style={{ background: COLORS.amber, color: COLORS.ink, boxShadow: AMBER_SHADOW }}
+            className="active:scale-95 flex-1 rounded py-1.5 text-xs font-semibold flex items-center justify-center gap-1"
           >
             <Check size={13} /> Enregistrer
           </button>
@@ -2666,7 +2677,7 @@ function AdminMatchRow({ match, onResult, onRemove, onEdit }) {
   }
 
   return (
-    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}` }} className="rounded p-3 mb-2">
+    <div style={{ background: COLORS.ink2, border: `1px solid ${COLORS.line}`, boxShadow: CARD_SHADOW }} className="rounded p-3 mb-2">
       <div className="flex items-center justify-between mb-2">
         <div style={{ color: COLORS.paper }} className="text-sm">
           {match.home} <span style={{ color: COLORS.paperDim }}>vs</span> {match.away}
