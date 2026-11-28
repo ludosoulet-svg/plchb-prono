@@ -132,6 +132,10 @@ function predictionsFromRows(rows) {
 // sinon les plus récents disparaissent de l'affichage dès que la table dépasse ce seuil.
 const PREDICTIONS_PAGE_SIZE = 1000;
 
+// Délai de sécurité avant qu'un pronostic juste envoyé puisse de nouveau être remplacé
+// par la valeur lue lors d'un rafraîchissement.
+const PREDICTION_RELEASE_DELAY_MS = 3000;
+
 async function loadAllPredictions() {
   const rows = [];
   for (let from = 0; ; from += PREDICTIONS_PAGE_SIZE) {
@@ -937,7 +941,9 @@ export default function App() {
     } catch {
       /* signalé ci-dessous */
     } finally {
-      endPredictionWrite([key]);
+      // La clé reste protégée quelques secondes après la réponse du serveur : un rafraîchissement
+      // lancé juste après la confirmation ne peut pas encore remplacer la valeur affichée.
+      setTimeout(() => endPredictionWrite([key]), PREDICTION_RELEASE_DELAY_MS);
     }
     // Échec de la validation la plus récente : on revient à la valeur enregistrée et on prévient.
     if (!saved && latestPredictionSubmitRef.current.get(key) === submitId) {
