@@ -289,9 +289,39 @@ export default function App() {
   const [bonusNameInput, setBonusNameInput] = useState("");
   const [bonusPointsInput, setBonusPointsInput] = useState("");
   const knownMatchIdsRef = useRef(null);
-  // Clés de pronostics dont l'écriture vers Supabase est en cours : le rafraîchissement
-  // périodique ne doit pas les écraser avec une valeur serveur pas encore à jour.
-  const pendingPredictionKeysRef = useRef(new Set());
+  // Suivi des écritures de pronostics vers Supabase, pour que le rafraîchissement
+  // périodique ne les écrase pas avec une valeur serveur pas encore à jour.
+  const pendingPredictionWritesRef = useRef(new Map()); // clé -> nombre d'écritures en cours
+  const predictionWriteSeqRef = useRef(0); // augmente à chaque écriture terminée
+  const settledPredictionSeqRef = useRef(new Map()); // clé -> numéro de sa dernière écriture terminée
+  const latestPredictionSubmitRef = useRef(new Map()); // clé -> numéro de la dernière validation
+  const confirmedPredictionRef = useRef(new Map()); // clé -> dernière valeur connue comme enregistrée
+  const [failedPredictions, setFailedPredictions] = useState({}); // clé -> {h,a} non enregistré
+
+  const beginPredictionWrite = (keys) => {
+    const pending = pendingPredictionWritesRef.current;
+    keys.forEach((k) => pending.set(k, (pending.get(k) || 0) + 1));
+  };
+
+  const endPredictionWrite = (keys) => {
+    const pending = pendingPredictionWritesRef.current;
+    const seq = ++predictionWriteSeqRef.current;
+    keys.forEach((k) => {
+      const remaining = (pending.get(k) || 0) - 1;
+      if (remaining > 0) pending.set(k, remaining);
+      else pending.delete(k);
+      settledPredictionSeqRef.current.set(k, seq);
+    });
+  };
+
+  // Efface le message d'échec si la valeur non confirmée apparaît finalement comme enregistrée.
+  useEffect(() => {
+    const recovered = Object.keys(failedPredictions).filter(
+      (k) => predictions[k] && predictions[k].h === failedPredictions[k].h && predictions[k].a === failedPredictions[k].a
+    );
+    if (recovered.length === 0) return;
+    setFailedPredictions((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => !recovered.includes(k))));
+  }, [predictions, failedPredictions]);
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -405,12 +435,19 @@ export default function App() {
       /* ignore */
     }
     try {
+      const seqAtStart = predictionWriteSeqRef.current;
       const { data, error } = await supabase.from("predictions").select("*");
       if (error) throw error;
       const fetched = predictionsFromRows(data || []);
+      // Clés à préserver : écriture encore en cours, ou terminée après le départ de cette lecture
+      // (la réponse reçue peut alors être antérieure à l'écriture).
+      const protectedKeys = new Set(pendingPredictionWritesRef.current.keys());
+      settledPredictionSeqRef.current.forEach((seq, k) => {
+        if (seq > seqAtStart) protectedKeys.add(k);
+      });
       setPredictions((prev) => {
         const merged = { ...fetched };
-        pendingPredictionKeysRef.current.forEach((k) => {
+        protectedKeys.forEach((k) => {
           if (prev[k]) merged[k] = prev[k];
           else delete merged[k]; // suppression ou renommage en cours : ne pas faire réapparaître la clé
         });
@@ -527,14 +564,14 @@ export default function App() {
       /* ignore */
     }
     const removedKeys = Object.keys(predictions).filter((key) => key.split("__")[1] === name);
-    removedKeys.forEach((k) => pendingPredictionKeysRef.current.add(k));
+    beginPredictionWrite(removedKeys);
     setPredictions((prev) => Object.fromEntries(Object.entries(prev).filter(([key]) => key.split("__")[1] !== name)));
     try {
       await supabase.from("predictions").delete().eq("username", name);
     } catch {
       /* ignore */
     } finally {
-      removedKeys.forEach((k) => pendingPredictionKeysRef.current.delete(k));
+      endPredictionWrite(removedKeys);
     }
     if (bonusPoints[name] !== undefined) {
       await resetBonusPoints(name);
@@ -573,7 +610,7 @@ export default function App() {
       : [];
 
     if (nameChanged) {
-      renamedKeys.forEach((k) => pendingPredictionKeysRef.current.add(k));
+      beginPredictionWrite(renamedKeys);
       setRegisteredUsers((prev) => prev.map((n) => (n === oldName ? cleanName : n)).sort());
       setUserPins((prev) => {
         if (!(oldName in prev)) return prev;
@@ -616,7 +653,7 @@ export default function App() {
       } catch {
         /* ignore */
       } finally {
-        renamedKeys.forEach((k) => pendingPredictionKeysRef.current.delete(k));
+        endPredictionWrite(renamedKeys);
       }
       try {
         await supabase.from("bonus_points").update({ username: cleanName }).eq("username", oldName);
@@ -863,19 +900,41 @@ export default function App() {
     const match = matches.find((m) => m.id === matchId);
     if (!match || isLocked(match)) return; // coup d'envoi passé : plus de pronostic possible
     const key = `${matchId}__${username}`;
-    pendingPredictionKeysRef.current.add(key);
-    setPredictions((prev) => ({ ...prev, [key]: { h: Number(h), a: Number(a) } }));
+    const value = { h: Number(h), a: Number(a) };
+    if (!pendingPredictionWritesRef.current.has(key)) confirmedPredictionRef.current.set(key, predictions[key]);
+    const submitId = (latestPredictionSubmitRef.current.get(key) || 0) + 1;
+    latestPredictionSubmitRef.current.set(key, submitId);
+    beginPredictionWrite([key]);
+    setFailedPredictions((prev) => Object.fromEntries(Object.entries(prev).filter(([k]) => k !== key)));
+    setPredictions((prev) => ({ ...prev, [key]: value }));
+    let saved = false;
     try {
-      await supabase
+      // Supabase ne lève pas d'exception en cas d'échec : il renvoie un champ error.
+      const { error } = await supabase
         .from("predictions")
         .upsert(
-          { match_id: matchId, username, pred_h: Number(h), pred_a: Number(a), updated_at: new Date().toISOString() },
+          { match_id: matchId, username, pred_h: value.h, pred_a: value.a, updated_at: new Date().toISOString() },
           { onConflict: "match_id,username" }
         );
+      if (error) throw error;
+      confirmedPredictionRef.current.set(key, value);
+      saved = true;
     } catch {
-      /* ignore */
+      /* signalé ci-dessous */
     } finally {
-      pendingPredictionKeysRef.current.delete(key);
+      endPredictionWrite([key]);
+    }
+    // Échec de la validation la plus récente : on revient à la valeur enregistrée et on prévient.
+    if (!saved && latestPredictionSubmitRef.current.get(key) === submitId) {
+      const previous = confirmedPredictionRef.current.get(key);
+      setPredictions((prev) => {
+        const next = { ...prev };
+        if (previous) next[key] = previous;
+        else delete next[key];
+        return next;
+      });
+      setFailedPredictions((prev) => ({ ...prev, [key]: value }));
+      refreshShared();
     }
   };
 
@@ -1309,6 +1368,7 @@ export default function App() {
                           locked
                           now={now}
                           myPred={myPrediction(m.id)}
+                          failedPred={failedPredictions[`${m.id}__${username}`]}
                           bettorsNames={Object.entries(predictions)
                             .filter(([key]) => key.startsWith(`${m.id}__`))
                             .map(([key]) => key.split("__")[1])}
@@ -1341,6 +1401,7 @@ export default function App() {
                       locked={false}
                       now={now}
                       myPred={myPrediction(m.id)}
+                      failedPred={failedPredictions[`${m.id}__${username}`]}
                       bettorsNames={Object.entries(predictions)
                         .filter(([key]) => key.startsWith(`${m.id}__`))
                         .map(([key]) => key.split("__")[1])}
@@ -2328,18 +2389,20 @@ function LicencieRow({ name, pin, email, isLast, confirming, onStartReset, onCan
   );
 }
 
-function MatchCard({ match, locked, now, myPred, bettorsNames, onSubmit }) {
-  const [h, setH] = useState(myPred?.h ?? "");
-  const [a, setA] = useState(myPred?.a ?? "");
+function MatchCard({ match, locked, now, myPred, failedPred, bettorsNames, onSubmit }) {
+  const [h, setH] = useState(failedPred?.h ?? myPred?.h ?? "");
+  const [a, setA] = useState(failedPred?.a ?? myPred?.a ?? "");
   const bettorsCount = bettorsNames.length;
   const countdown = !locked ? getCountdown(new Date(match.date), now) : null;
 
   useEffect(() => {
-    if (myPred) {
-      setH(myPred.h);
-      setA(myPred.a);
+    // Après un échec, on garde à l'écran le score saisi pour pouvoir le revalider.
+    const source = failedPred || myPred;
+    if (source) {
+      setH(source.h);
+      setA(source.a);
     }
-  }, [myPred]);
+  }, [myPred, failedPred]);
 
   const isSaved = myPred && h !== "" && a !== "" && Number(h) === myPred.h && Number(a) === myPred.a;
 
@@ -2370,7 +2433,11 @@ function MatchCard({ match, locked, now, myPred, bettorsNames, onSubmit }) {
         </div>
       </div>
       <div className="mt-3 flex items-center justify-between">
-        {locked ? (
+        {failedPred ? (
+          <div role="alert" style={{ color: COLORS.amber }} className="text-xs font-semibold">
+            Pronostic non enregistré, réessaie
+          </div>
+        ) : locked ? (
           <div style={{ color: COLORS.paperDim }} className="text-xs flex items-center gap-1">
             <Lock size={12} /> Pronostics clos
           </div>
