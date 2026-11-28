@@ -289,6 +289,9 @@ export default function App() {
   const [bonusNameInput, setBonusNameInput] = useState("");
   const [bonusPointsInput, setBonusPointsInput] = useState("");
   const knownMatchIdsRef = useRef(null);
+  // Clés de pronostics dont l'écriture vers Supabase est en cours : le rafraîchissement
+  // périodique ne doit pas les écraser avec une valeur serveur pas encore à jour.
+  const pendingPredictionKeysRef = useRef(new Set());
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -404,7 +407,15 @@ export default function App() {
     try {
       const { data, error } = await supabase.from("predictions").select("*");
       if (error) throw error;
-      setPredictions(predictionsFromRows(data || []));
+      const fetched = predictionsFromRows(data || []);
+      setPredictions((prev) => {
+        const merged = { ...fetched };
+        pendingPredictionKeysRef.current.forEach((k) => {
+          if (prev[k]) merged[k] = prev[k];
+          else delete merged[k]; // suppression ou renommage en cours : ne pas faire réapparaître la clé
+        });
+        return merged;
+      });
     } catch {
       /* ignore */
     }
@@ -515,11 +526,15 @@ export default function App() {
     } catch {
       /* ignore */
     }
+    const removedKeys = Object.keys(predictions).filter((key) => key.split("__")[1] === name);
+    removedKeys.forEach((k) => pendingPredictionKeysRef.current.add(k));
     setPredictions((prev) => Object.fromEntries(Object.entries(prev).filter(([key]) => key.split("__")[1] !== name)));
     try {
       await supabase.from("predictions").delete().eq("username", name);
     } catch {
       /* ignore */
+    } finally {
+      removedKeys.forEach((k) => pendingPredictionKeysRef.current.delete(k));
     }
     if (bonusPoints[name] !== undefined) {
       await resetBonusPoints(name);
@@ -550,7 +565,15 @@ export default function App() {
       return { error: "Ce nom est déjà utilisé." };
     }
 
+    // Anciennes et nouvelles clés des pronostics concernés par un changement de nom.
+    const renamedKeys = nameChanged
+      ? Object.keys(predictions)
+          .filter((key) => key.split("__")[1] === oldName)
+          .flatMap((key) => [key, `${key.split("__")[0]}__${cleanName}`])
+      : [];
+
     if (nameChanged) {
+      renamedKeys.forEach((k) => pendingPredictionKeysRef.current.add(k));
       setRegisteredUsers((prev) => prev.map((n) => (n === oldName ? cleanName : n)).sort());
       setUserPins((prev) => {
         if (!(oldName in prev)) return prev;
@@ -592,6 +615,8 @@ export default function App() {
         await supabase.from("predictions").update({ username: cleanName }).eq("username", oldName);
       } catch {
         /* ignore */
+      } finally {
+        renamedKeys.forEach((k) => pendingPredictionKeysRef.current.delete(k));
       }
       try {
         await supabase.from("bonus_points").update({ username: cleanName }).eq("username", oldName);
@@ -837,7 +862,9 @@ export default function App() {
     if (h === "" || a === "" || !username) return;
     const match = matches.find((m) => m.id === matchId);
     if (!match || isLocked(match)) return; // coup d'envoi passé : plus de pronostic possible
-    setPredictions((prev) => ({ ...prev, [`${matchId}__${username}`]: { h: Number(h), a: Number(a) } }));
+    const key = `${matchId}__${username}`;
+    pendingPredictionKeysRef.current.add(key);
+    setPredictions((prev) => ({ ...prev, [key]: { h: Number(h), a: Number(a) } }));
     try {
       await supabase
         .from("predictions")
@@ -847,6 +874,8 @@ export default function App() {
         );
     } catch {
       /* ignore */
+    } finally {
+      pendingPredictionKeysRef.current.delete(key);
     }
   };
 
