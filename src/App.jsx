@@ -128,7 +128,26 @@ function predictionsFromRows(rows) {
   return map;
 }
 
-const CATEGORIES = ["SM1", "SM2", "SF1", "U18F", "U18M", "U15F", "U15M", "U13F", "U13M"];
+// Supabase renvoie au maximum 1000 lignes par requête : on lit les pronostics page par page,
+// sinon les plus récents disparaissent de l'affichage dès que la table dépasse ce seuil.
+const PREDICTIONS_PAGE_SIZE = 1000;
+
+async function loadAllPredictions() {
+  const rows = [];
+  for (let from = 0; ; from += PREDICTIONS_PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from("predictions")
+      .select("*")
+      .order("created_at")
+      .order("id")
+      .range(from, from + PREDICTIONS_PAGE_SIZE - 1);
+    if (error) throw error;
+    rows.push(...(data || []));
+    if (!data || data.length < PREDICTIONS_PAGE_SIZE) return rows;
+  }
+}
+
+const CATEGORIES =["SM1", "SM2", "SF1", "U18F", "U18M", "U15F", "U15M", "U13F", "U13M"];
 
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -340,9 +359,7 @@ export default function App() {
     }
 
     try {
-      const { data, error } = await supabase.from("predictions").select("*");
-      if (error) throw error;
-      setPredictions(predictionsFromRows(data || []));
+      setPredictions(predictionsFromRows(await loadAllPredictions()));
     } catch {
       setPredictions({});
     }
@@ -436,9 +453,7 @@ export default function App() {
     }
     try {
       const seqAtStart = predictionWriteSeqRef.current;
-      const { data, error } = await supabase.from("predictions").select("*");
-      if (error) throw error;
-      const fetched = predictionsFromRows(data || []);
+      const fetched = predictionsFromRows(await loadAllPredictions());
       // Clés à préserver : écriture encore en cours, ou terminée après le départ de cette lecture
       // (la réponse reçue peut alors être antérieure à l'écriture).
       const protectedKeys = new Set(pendingPredictionWritesRef.current.keys());
