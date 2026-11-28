@@ -2395,14 +2395,18 @@ function MatchCard({ match, locked, now, myPred, failedPred, bettorsNames, onSub
   const bettorsCount = bettorsNames.length;
   const countdown = !locked ? getCountdown(new Date(match.date), now) : null;
 
+  // Après un échec, on garde à l'écran le score saisi pour pouvoir le revalider.
+  const sourceH = failedPred?.h ?? myPred?.h;
+  const sourceA = failedPred?.a ?? myPred?.a;
+
+  // On ne resynchronise les cases que si le score change réellement : chaque rafraîchissement
+  // recrée l'objet myPred, ce qui effacerait une saisie en cours.
   useEffect(() => {
-    // Après un échec, on garde à l'écran le score saisi pour pouvoir le revalider.
-    const source = failedPred || myPred;
-    if (source) {
-      setH(source.h);
-      setA(source.a);
+    if (sourceH !== undefined && sourceA !== undefined) {
+      setH(sourceH);
+      setA(sourceA);
     }
-  }, [myPred, failedPred]);
+  }, [sourceH, sourceA]);
 
   const isSaved = myPred && h !== "" && a !== "" && Number(h) === myPred.h && Number(a) === myPred.a;
 
